@@ -4,11 +4,14 @@ import HomePage from './pages/HomePage'
 import SoundToggle from './components/SoundToggle'
 import PageTransition from './components/PageTransition'
 import PageBackground from './components/PageBackground'
+import AboutPage from './pages/AboutPage'
+import { loadAbout, localAbout } from './lib/aboutContent'
 import { initialNavigation, navigationReducer } from './lib/navigation'
 import './styles/App.css'
 
 function App() {
   const [menu, setMenu] = useState(localMenu)
+  const [aboutSections, setAboutSections] = useState(localAbout)
   const [navigation, dispatch] = useReducer(navigationReducer, initialNavigation)
   const { page: currentPage, transition } = navigation
   const pageRef = useRef<HTMLDivElement>(null)
@@ -20,6 +23,9 @@ function App() {
       if (!controller.signal.aborted) {
         console.warn('Using local menu CSV because the remote menu could not load.', error)
       }
+    })
+    loadAbout(controller.signal).then(setAboutSections).catch(error => {
+      if (!controller.signal.aborted) console.warn('Using local About CSV because remote content could not load.', error)
     })
     return () => controller.abort()
   }, [])
@@ -48,6 +54,15 @@ function App() {
       <div ref={pageRef} inert={transition !== null} aria-busy={transition !== null}>
         {currentPage === null ? (
           <HomePage items={menu} onSelect={navigate} navigationDisabled={transition !== null} />
+        ) : currentPage === 'about' ? (
+          <AboutPage
+            key={JSON.stringify(aboutSections)}
+            sections={aboutSections}
+            backgroundVideo={page?.pageBackgroundVideo}
+            headingRef={headingRef}
+            onBack={() => navigate(null)}
+            navigationDisabled={transition !== null}
+          />
         ) : (
           <main className="content-page">
             <PageBackground key={`${page?.id}:${page?.pageBackgroundVideo}`} filename={page?.pageBackgroundVideo} />
