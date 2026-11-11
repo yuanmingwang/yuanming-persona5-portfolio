@@ -41,7 +41,7 @@ export default function SoundToggle() {
       return
     }
     wantsPlayback.current = true
-    audio.volume = 0.5
+    audio.volume = 0.3
     try {
       await audio.play()
       setError(false)
