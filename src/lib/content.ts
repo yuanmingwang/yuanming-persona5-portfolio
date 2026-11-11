@@ -5,9 +5,16 @@ export type MenuItem = {
   id: string
   label: string
   order: number
+  pageBackgroundVideo?: string
 }
 
-type MenuRow = { id: string; label: string; order: string }
+type MenuRow = {
+  id: string
+  order: string
+  menu_label?: string
+  label?: string // Backward compatibility with the original CSV.
+  page_background_video?: string
+}
 
 // One parser for both the bundled CSV and a published Google Sheet.
 export function parseMenu(csv: string): MenuItem[] {
@@ -18,20 +25,26 @@ export function parseMenu(csv: string): MenuItem[] {
     transform: value => value.trim(),
   })
 
-  if (result.errors.length || !['id', 'label', 'order'].every(
-    column => result.meta.fields?.includes(column),
-  )) {
-    throw new Error('Menu CSV needs the columns: id, label, order.')
+  const fields = result.meta.fields ?? []
+  if (result.errors.length || !['id', 'order'].every(column => fields.includes(column)) ||
+    !fields.some(column => column === 'menu_label' || column === 'label')) {
+    throw new Error('Menu CSV needs id, order, and menu_label (or label).')
   }
 
   const ids = new Set<string>()
   const items = result.data.map(row => {
     const order = Number(row.order)
-    if (!row.id || !row.label || !row.order || !Number.isFinite(order) || ids.has(row.id)) {
+    const label = row.menu_label || row.label
+    if (!row.id || !label || !row.order || !Number.isFinite(order) || ids.has(row.id)) {
       throw new Error('Each menu row needs a unique id, a label, and a numeric order.')
     }
     ids.add(row.id)
-    return { id: row.id, label: row.label, order }
+    return {
+      id: row.id,
+      label,
+      order,
+      pageBackgroundVideo: row.page_background_video || undefined,
+    }
   })
 
   if (!items.length) throw new Error('Menu CSV is empty.')

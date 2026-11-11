@@ -3,6 +3,7 @@ import { loadMenu, localMenu } from './lib/content'
 import HomePage from './pages/HomePage'
 import SoundToggle from './components/SoundToggle'
 import PageTransition from './components/PageTransition'
+import PageBackground from './components/PageBackground'
 import { initialNavigation, navigationReducer } from './lib/navigation'
 import './styles/App.css'
 
@@ -49,6 +50,7 @@ function App() {
           <HomePage items={menu} onSelect={navigate} navigationDisabled={transition !== null} />
         ) : (
           <main className="content-page">
+            <PageBackground key={`${page?.id}:${page?.pageBackgroundVideo}`} filename={page?.pageBackgroundVideo} />
             <button className="utility-button" onClick={() => navigate(null)}>← BACK TO MENU</button>
             <p className="eyebrow">THE NEXT CHAPTER</p>
             <h1 ref={headingRef} tabIndex={-1}>{page?.label}</h1>

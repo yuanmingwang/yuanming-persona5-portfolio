@@ -60,7 +60,7 @@
 .keyboard-hint { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 9px; letter-spacing: .1em; font-weight: 800; }
 .keyboard-hint span { margin-left: 10px; }
 kbd { display: inline-block; padding: 4px 7px; border: 1px solid #fff8; background: #1119; font-family: inherit; font-size: 12px; }
-.content-page { min-height: 100svh; padding: 60px 8% 130px; background: linear-gradient(120deg, #171317 65%, #b50827 65%); }
+.content-page { position: relative; isolation: isolate; min-height: 100svh; padding: 60px 8% 130px; background: linear-gradient(120deg, #171317 65%, #b50827 65%); }
 .content-page .eyebrow { margin-top: 90px; color: #ff3455; }
 .content-page h1 { font-family: Impact, 'Arial Black', sans-serif; font-size: clamp(40px, 9vw, 120px); font-style: italic; overflow-wrap: anywhere; margin: 20px 0; }
 .content-page > p:last-child { color: #e1d8d8; line-height: 1.7; }
@@ -92,4 +92,13 @@ kbd { display: inline-block; padding: 4px 7px; border: 1px solid #fff8; backgrou
 }
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
+}
+
+/* Each content page gets its wallpaper filename from the menu CSV. Fixed
+   layers keep the video filling the viewport as future page content scrolls. */
+.content-background-video { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; }
+.content-background-shade { position: fixed; inset: 0; z-index: -1; pointer-events: none; background: linear-gradient(90deg, #100e10d9, #100e104d), linear-gradient(0deg, #100e1080, transparent 50%); }
+.content-motion-button { position: fixed; right: 4%; bottom: 28px; z-index: 3; }
+@media (max-width: 600px) {
+  .content-motion-button { bottom: 105px; max-width: 135px; line-height: 1.4; }
 }

@@ -1,6 +1,6 @@
-id,label,order
-about,ABOUT ME,1
-resume,RESUME,2
-socials,SOCIALS,3
-journey,JOURNEY,4
-questions,QUESTIONS,5
+id,order,menu_label,page_background_video
+about,1,ABOUT ME,Lavenza animated wallpaper.mp4
+resume,2,RESUME,Makoto animated wallpaper.mp4
+socials,3,SOCIALS,Morgana animated wallpaper.mp4
+journey,4,JOURNEY,Akechi animated wallpaper.mp4
+questions,5,QUESTIONS,Ann animated wallpaper.mp4
