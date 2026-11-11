@@ -1,0 +1,22 @@
+id,order,year,period,type,title,organization,city,country,description,highlights,icon,landmark_image,topics
+scie,1,2012,Sep 2012 – May 2016,education,THE FIRST CHAPTER,Shenzhen College of International Education,Shenzhen,China,"Attended Shenzhen College of International Education (SCIE) from 2012 to 2016, completing both the IGCSE and A-Level curricula.","School years at SCIE before beginning university studies.
+Built a strong academic foundation through an internationally focused education, developing critical thinking, problem-solving, and independent learning skills.",p5_scie_logo.webp,p5_shenzhen_skyline.webp,School|Foundations
+depauw,2,2016,Aug 2016 – May 2019,education,ENGINEERING FOUNDATIONS,DePauw University,"Greencastle, Indiana",United States,"Studied engineering at DePauw University in Greencastle, Indiana.","Bachelor of Arts, Engineering.
+Study period: August 2016 to May 2019.",p5_depauw_logo.webp,p5_east_college.webp,Engineering|Undergraduate studies
+bgi,3,2018,May 2018 – Aug 2018,experience,DATA MEETS BIOLOGY,Beijing Genomics Institute,Shenzhen,China,Worked with gene-sequencing datasets during a software development internship in Shenzhen.,"Located gene loci and computed p-values.
+Used C, Python, and Perl to support bioinformatics work.",p5_shenzhen_skyline.webp,p5_shenzhen_coastal_city.webp,Internship|Bioinformatics|C|Python|Perl
+ke-mai,4,2019,May 2019 – Aug 2019,experience,BUILDING SOFTWARE TOOLS,Ke Mai Technologies Corporation,Shenzhen,China,Developed a C++/Microsoft Foundation Classes plug-in during a software developer internship.,Implemented application messages and notifications using C++ and MFC.,p5_shenzhen_coastal_city.webp,p5_shenzhen_skyline.webp,Internship|C++|MFC
+columbia,5,2019,Aug 2019 – May 2021,education,THE COMPUTER SCIENCE CHAPTER,Columbia University,"New York, New York",United States,Studied computer science at Columbia University in New York.,"Bachelor of Science, Computer Science.
+Study period: August 2019 to May 2021.",p5_columbia_logo.webp,p5_columbia_low_library.webp,Computer science|Undergraduate studies
+lightpaw,6,2021,Jun 2021 – Jun 2023,experience,MAKING GAMES PLAYABLE,LightPaw Networks,Shenzhen,China,"Built data-driven gameplay systems and client-side interfaces for mobile games using Unity, C#, and Lua.","Worked on Godyssey (2021–2022) and The King’s Avatar (2022–2023).
+Implemented systems including inventory, quests, battle pass, equipment, achievements, and progression.
+Improved item-heavy screens using virtualized lists and pooled UI objects.",p5_shenzhen_skyline.webp,p5_shenzhen_coastal_city.webp,Unity|C#|Lua|Gameplay systems
+tencent,7,2024,Mar 2024 – Dec 2024,experience,"SOCIAL PLAY, AT SCALE",Tencent,Shenzhen,China,Developed client-side gameplay and interface features for PUBG Mobile’s Home System.,"Implemented party, dance, and fireworks features for social activities.
+Built UMG screens and interactive behaviors with Unreal Engine, Lua, and C++.
+Connected client–server events to local state and presentation.",p5_shenzhen_coastal_city.webp,p5_shenzhen_skyline.webp,PUBG Mobile|Unreal Engine|Lua|UMG
+autox,8,2025,Apr 2025 – Sep 2025,experience,GRAPHICS IN MOTION,AutoX,Shenzhen,China,"Worked on real-time autonomous-driving visualization using C++, Vulkan, and VulkanSceneGraph.","Owned implementation of the in-car Parking visualization mode.
+Rendered road lanes, parking spaces, and surrounding scene objects.
+Optimized point-cloud rendering with object pooling and point limits.",p5_shenzhen_skyline.webp,p5_shenzhen_coastal_city.webp,C++|Vulkan|VSG|Real-time visualization
+uvic,9,2025,Sep 2025 – Sep 2026,education,A NEW DATA PERSPECTIVE,University of Victoria,"Victoria, British Columbia",Canada,"Studied applied data science at the University of Victoria, bringing a software and graphics background into data-focused work.","Master of Engineering, Applied Data Science.
+Projects across machine learning, data engineering, algorithms, and simulation.",p5_uvic_logo.webp,p5_victoria_bc_parliament.webp,Applied data science|Machine learning|Data engineering
+vancouver,10,NOW,Current location,location,THE NEXT CHAPTER,Vancouver,"Vancouver, British Columbia",Canada,"Based in Vancouver, British Columbia, Canada.","Software development, game development, real-time graphics, and data & ML.",p5_vancouver_steam_clock.webp,p5_vancouver_steam_clock.webp,Software|Games|Graphics|Data & ML
