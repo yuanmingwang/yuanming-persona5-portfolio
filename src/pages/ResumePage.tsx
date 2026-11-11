@@ -1,6 +1,8 @@
 import { useMemo, useRef, useState } from 'react'
 import type { KeyboardEvent, Ref } from 'react'
 import PageBackground from '../components/PageBackground'
+import images from '../content/about-images.json'
+import { pickImage } from '../lib/about'
 import { filterResume, resumeCategories } from '../lib/resume'
 import type { ResumeCategory, ResumeEntry } from '../lib/resume'
 import '../styles/ResumePage.css'
@@ -20,6 +22,8 @@ export default function ResumePage({ entries, backgroundVideo, headingRef, onBac
   const detailRef = useRef<HTMLHeadingElement>(null)
   const listRef = useRef<HTMLElement>(null)
   const profile = entries.find(entry => entry.section === 'profile')!
+  // A fresh draw on each page mount; category/search changes keep this portrait.
+  const [characterImage] = useState(() => pickImage(images.character, profile.image))
   const visible = useMemo(() => filterResume(entries, category, query), [entries, category, query])
   const selected = visible.find(entry => entry.id === selectedId) ?? visible[0]
   const categoryLabel = resumeCategories.find(item => item.id === category)!.label
@@ -72,7 +76,7 @@ export default function ResumePage({ entries, backgroundVideo, headingRef, onBac
             </div>
           </div>
           <div className="resume-hero-aside">
-            {profile.image && <img className="resume-hero-character" src={`${import.meta.env.BASE_URL}image/character/${encodeURIComponent(profile.image)}`} alt="" />}
+            {characterImage && <img className="resume-hero-character" src={`${import.meta.env.BASE_URL}image/character/${encodeURIComponent(characterImage)}`} alt="" />}
             <div className="resume-counts">
               <span><strong>{count('experience')}</strong> PROFESSIONAL ROLES</span>
               <span><strong>{count('projects')}</strong> PROJECTS</span>
