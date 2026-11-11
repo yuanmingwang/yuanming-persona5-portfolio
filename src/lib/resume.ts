@@ -1,4 +1,5 @@
 import Papa from 'papaparse'
+import { assignImages } from './about.ts'
 
 export const resumeCategories = [
   { id: 'education', label: 'EDUCATION' },
@@ -23,6 +24,7 @@ export type ResumeEntry = {
   link?: string
   highlight: string
   image: string
+  confidantImage?: string
 }
 
 export function safeResumeLink(value: string): string | undefined {
@@ -65,6 +67,7 @@ export function parseResume(csv: string): ResumeEntry[] {
       link: safeResumeLink(row.link ?? ''),
       highlight: row.highlight ?? '',
       image: row.image ?? '',
+      confidantImage: row.confidant_image ?? '',
     }
   })
   if (entries.filter(entry => entry.section === 'profile').length !== 1 || entries.length < 2) {
@@ -78,4 +81,17 @@ export function filterResume(entries: ResumeEntry[], category: ResumeCategory, q
   return entries.filter(entry => entry.section === category &&
     [entry.title, entry.subtitle, entry.summary, entry.period, entry.location, ...entry.tags, ...entry.bullets, entry.highlight]
       .join(' ').toLowerCase().includes(search))
+}
+
+// Choose once per page visit. Keep portraits unique within each category;
+// separate categories can reuse files because the résumé has more records
+// than the confidant folder has images.
+export function assignResumeFooterImages(entries: ResumeEntry[], files: string[], random = Math.random): Record<string, string | undefined> {
+  const selected: Record<string, string | undefined> = {}
+  for (const category of resumeCategories) {
+    const records = entries.filter(entry => entry.section === category.id)
+    const portraits = assignImages(files, records.map(entry => entry.confidantImage ?? ''), random)
+    records.forEach((entry, index) => { selected[entry.id] = portraits[index] })
+  }
+  return selected
 }

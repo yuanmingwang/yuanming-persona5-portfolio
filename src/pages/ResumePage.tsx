@@ -3,7 +3,7 @@ import type { KeyboardEvent, Ref } from 'react'
 import PageBackground from '../components/PageBackground'
 import images from '../content/about-images.json'
 import { pickImage } from '../lib/about'
-import { filterResume, resumeCategories } from '../lib/resume'
+import { assignResumeFooterImages, filterResume, resumeCategories } from '../lib/resume'
 import type { ResumeCategory, ResumeEntry } from '../lib/resume'
 import '../styles/ResumePage.css'
 
@@ -24,6 +24,7 @@ export default function ResumePage({ entries, backgroundVideo, headingRef, onBac
   const profile = entries.find(entry => entry.section === 'profile')!
   // A fresh draw on each page mount; category/search changes keep this portrait.
   const [characterImage] = useState(() => pickImage(images.character, profile.image))
+  const [footerImages] = useState(() => assignResumeFooterImages(entries, images.confidant))
   const visible = useMemo(() => filterResume(entries, category, query), [entries, category, query])
   const selected = visible.find(entry => entry.id === selectedId) ?? visible[0]
   const categoryLabel = resumeCategories.find(item => item.id === category)!.label
@@ -126,7 +127,11 @@ export default function ResumePage({ entries, backgroundVideo, headingRef, onBac
                 {selected.link && <a className="resume-entry-link" href={selected.link} target="_blank" rel="noreferrer">VIEW PROJECT ↗</a>}
                 {category === 'education' && count('coursework') > 0 && <button className="utility-button resume-coursework-link" onClick={() => chooseCategory('coursework')}>EXPLORE COURSEWORK →</button>}
               </div>
-              <footer className="resume-detail-footer"><span>{profile.title.toUpperCase()}</span><span>THE RECORD CONTINUES. ★</span></footer>
+              <footer className="resume-detail-footer">
+                {footerImages[selected.id] && <img src={`${import.meta.env.BASE_URL}image/character%20confidant%20icon/${encodeURIComponent(footerImages[selected.id]!)}`} alt="" />}
+                <div><span>{profile.title.toUpperCase()}</span><p>THE RECORD CONTINUES.</p></div>
+                <span className="resume-footer-star" aria-hidden="true">★</span>
+              </footer>
             </article>
           ) : <div className="resume-no-detail"><span aria-hidden="true">★</span><p>Try another search to uncover a file.</p></div>}
         </section>
