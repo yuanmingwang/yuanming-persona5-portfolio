@@ -1,13 +1,13 @@
-import { useRef, useState } from 'react'
-import type { KeyboardEvent } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import type { MenuItem } from '../lib/content'
 
 type HomePageProps = {
   items: MenuItem[]
   onSelect: (id: string) => void
+  navigationDisabled?: boolean
 }
 
-function HomePage({ items, onSelect }: HomePageProps) {
+function HomePage({ items, onSelect, navigationDisabled = false }: HomePageProps) {
   const [activeId, setActiveId] = useState(items[0].id)
   const [motionPaused, setMotionPaused] = useState(
     () => window.matchMedia('(prefers-reduced-motion: reduce)').matches,
@@ -16,18 +16,29 @@ function HomePage({ items, onSelect }: HomePageProps) {
   const menuRef = useRef<HTMLElement>(null)
   const activeIndex = Math.max(0, items.findIndex(item => item.id === activeId))
 
-  function handleKeys(event: KeyboardEvent<HTMLElement>) {
-    const keys = ['ArrowDown', 'ArrowUp', 'Home', 'End']
-    if (!keys.includes(event.key)) return
-    event.preventDefault()
-    const current = items.findIndex(item => item.id === activeId)
-    let next = Math.max(0, current)
-    if (event.key === 'ArrowDown') next = (next + 1) % items.length
-    if (event.key === 'ArrowUp') next = (next - 1 + items.length) % items.length
-    if (event.key === 'Home') next = 0
-    if (event.key === 'End') next = items.length - 1
-    menuRef.current?.querySelectorAll<HTMLButtonElement>('.menu-item')[next]?.focus()
-  }
+  // Listen while the menu is mounted, including after a background or sound click.
+  useEffect(() => {
+    if (navigationDisabled) return
+    function handleKeys(event: KeyboardEvent) {
+      const target = event.target
+      if (event.altKey || event.ctrlKey || event.metaKey ||
+        (target instanceof HTMLElement && target.closest('input, textarea, select, [contenteditable]'))) return
+
+      if (!['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(event.key)) return
+      event.preventDefault() // Stop the browser's normal arrow-key scrolling.
+      const current = Math.max(0, items.findIndex(item => item.id === activeId))
+      let next = current
+      if (event.key === 'ArrowDown') next = (current + 1) % items.length
+      if (event.key === 'ArrowUp') next = (current - 1 + items.length) % items.length
+      if (event.key === 'Home') next = 0
+      if (event.key === 'End') next = items.length - 1
+      // Focusing a button normally scrolls it into view; keep the viewport still.
+      menuRef.current?.querySelectorAll<HTMLButtonElement>('.menu-item')[next]?.focus({ preventScroll: true })
+    }
+
+    window.addEventListener('keydown', handleKeys)
+    return () => window.removeEventListener('keydown', handleKeys)
+  }, [activeId, items, navigationDisabled])
 
   async function toggleMotion() {
     const video = videoRef.current
@@ -69,11 +80,11 @@ function HomePage({ items, onSelect }: HomePageProps) {
 
       <section className="menu-panel" aria-label="Portfolio menu">
         <p className="menu-kicker">CHOOSE YOUR NEXT MOVE</p>
-        <nav ref={menuRef} className="home-menu" aria-label="Main navigation" onKeyDown={handleKeys}>
+        <nav ref={menuRef} className="home-menu" aria-label="Main navigation">
           {items.map((item, index) => (
             <button
               key={item.id}
-              autoFocus={index === 0}
+              autoFocus={!navigationDisabled && index === 0}
               className={`menu-item ${index === activeIndex ? 'is-active' : ''}`}
               onFocus={() => setActiveId(item.id)}
               onPointerEnter={() => setActiveId(item.id)}
