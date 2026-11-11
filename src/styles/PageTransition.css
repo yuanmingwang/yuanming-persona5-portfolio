@@ -16,10 +16,22 @@
   --wipe-full: polygon(-40% 0, 140% 0, 115% 100%, -65% 100%);
   --wipe-end: polygon(140% 0, 170% 0, 145% 100%, 115% 100%);
 }
-.page-transition--cover { animation: p5-cover 360ms cubic-bezier(.7, 0, .2, 1) both; }
-.page-transition--reveal { animation: p5-reveal 430ms 220ms cubic-bezier(.7, 0, .2, 1) both; }
-.page-transition--return { transform: scaleX(-1); }
-.page-transition--return .transition-card { transform: scaleX(-1) rotate(-7deg); }
+
+.page-transition--cover {
+  animation: p5-cover 360ms cubic-bezier(.7, 0, .2, 1) both;
+}
+
+.page-transition--reveal {
+  animation: p5-reveal 430ms 220ms cubic-bezier(.7, 0, .2, 1) both;
+}
+
+.page-transition--return {
+  transform: scaleX(-1);
+}
+
+.page-transition--return .transition-card {
+  transform: scaleX(-1) rotate(-7deg);
+}
 
 .transition-speed-lines {
   position: absolute;
@@ -27,9 +39,26 @@
   background-image: radial-gradient(#170b1340 1.4px, transparent 1.4px), repeating-linear-gradient(115deg, transparent 0 70px, #ff456022 70px 74px);
   background-size: 9px 9px, auto;
 }
-.transition-slash { position: absolute; background: #101012; width: 150%; left: -25%; }
-.transition-slash--top { top: -1px; height: 34%; clip-path: polygon(0 0, 100% 0, 75% 20%, 21% 100%, 0 77%); }
-.transition-slash--bottom { bottom: -1px; height: 36%; clip-path: polygon(0 84%, 78% 0, 100% 32%, 100% 100%, 0 100%); }
+
+.transition-slash {
+  position: absolute;
+  background: #101012;
+  width: 150%;
+  left: -25%;
+}
+
+.transition-slash--top {
+  top: -1px;
+  height: 34%;
+  clip-path: polygon(0 0, 100% 0, 75% 20%, 21% 100%, 0 77%);
+}
+
+.transition-slash--bottom {
+  bottom: -1px;
+  height: 36%;
+  clip-path: polygon(0 84%, 78% 0, 100% 32%, 100% 100%, 0 100%);
+}
+
 .transition-burst {
   position: absolute;
   width: min(78vmin, 740px);
@@ -38,8 +67,25 @@
   transform: rotate(-14deg);
   clip-path: polygon(50% 0, 60% 32%, 92% 8%, 75% 40%, 100% 48%, 74% 58%, 90% 92%, 58% 72%, 46% 100%, 38% 72%, 4% 94%, 26% 60%, 0 48%, 31% 38%, 11% 9%, 43% 30%);
 }
-.transition-card { position: relative; display: flex; flex-direction: column; align-items: flex-start; width: max-content; max-width: 85%; transform: rotate(-7deg); }
-.transition-eyebrow { margin: 0 0 13px 12px; font-size: clamp(10px, 1.2vw, 16px); font-weight: 900; letter-spacing: .22em; color: #fffaf0; }
+
+.transition-card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  width: max-content;
+  max-width: 85%;
+  transform: rotate(-7deg);
+}
+
+.transition-eyebrow {
+  margin: 0 0 13px 12px;
+  font-size: clamp(10px, 1.2vw, 16px);
+  font-weight: 900;
+  letter-spacing: .22em;
+  color: #fffaf0;
+}
+
 .transition-label {
   display: block;
   max-width: 100%;
@@ -54,16 +100,75 @@
   overflow-wrap: anywhere;
   box-shadow: 9px 10px 0 #101012;
 }
-.transition-signature { align-self: flex-end; margin: 22px 8px 0; font-size: clamp(9px, 1vw, 13px); font-weight: 900; letter-spacing: .15em; color: #fffaf0; }
-.transition-signature span { font-size: 20px; vertical-align: middle; margin-right: 5px; }
 
-@keyframes p5-cover { from { clip-path: var(--wipe-start); } to { clip-path: var(--wipe-full); } }
-@keyframes p5-reveal { from { clip-path: var(--wipe-full); } to { clip-path: var(--wipe-end); } }
-@media (max-width: 600px) {
-  .transition-burst { width: 105vmin; }
-  .transition-label { font-size: clamp(36px, 11vw, 65px); box-shadow: 5px 6px 0 #101012; }
+.transition-signature {
+  align-self: flex-end;
+  margin: 22px 8px 0;
+  font-size: clamp(9px, 1vw, 13px);
+  font-weight: 900;
+  letter-spacing: .15em;
+  color: #fffaf0;
 }
+
+.transition-signature span {
+  font-size: 20px;
+  vertical-align: middle;
+  margin-right: 5px;
+}
+
+@keyframes p5-cover {
+  from {
+    clip-path: var(--wipe-start);
+  }
+
+  to {
+    clip-path: var(--wipe-full);
+  }
+}
+
+@keyframes p5-reveal {
+  from {
+    clip-path: var(--wipe-full);
+  }
+
+  to {
+    clip-path: var(--wipe-end);
+  }
+}
+
+@media (max-width: 600px) {
+  .transition-burst {
+    width: 105vmin;
+  }
+
+  .transition-label {
+    font-size: clamp(36px, 11vw, 65px);
+    box-shadow: 5px 6px 0 #101012;
+  }
+}
+
 /* Also handle a motion preference changed while an overlay is already open. */
 @media (prefers-reduced-motion: reduce) {
-  .page-transition { animation-duration: 1ms; animation-delay: 0ms; }
+  .page-transition {
+    animation-duration: 1ms;
+    animation-delay: 0ms;
+  }
+}
+
+/* The WebM already contains alpha. Transparent pixels show the live
+   page below; no green-screen shader, blend mode, or extra animation is needed. */
+.page-transition--checking,
+.page-transition--video {
+  background: transparent;
+}
+
+.page-transition--checking .transition-video {
+  visibility: hidden;
+}
+
+.transition-video {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
 }

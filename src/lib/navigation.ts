@@ -1,3 +1,14 @@
+// Measured from the 3.5s WebM (Persona 5 Stinger Transition.webm): fully opaque at ~1.3–2.2s.
+// Swap well inside that window so neither page change nor scroll reset shows.
+export const STINGER_SWITCH_TIME = 1.5
+
+export function getStingerCue(mediaTime: number): 'wait' | 'covered' | 'fallback' {
+  // A heavily delayed frame must use the CSS cover instead of swapping after
+  // the video's transparent reveal has already started.
+  if (mediaTime >= 2.2) return 'fallback'
+  return mediaTime >= STINGER_SWITCH_TIME ? 'covered' : 'wait'
+}
+
 // Pure state changes keep the outgoing page mounted until the wipe covers it.
 export type NavigationState = {
   page: string | null
