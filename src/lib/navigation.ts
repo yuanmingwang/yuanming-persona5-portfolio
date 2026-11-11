@@ -1,4 +1,4 @@
-// Measured from the 3.5s WebM (Persona 5 Stinger Transition.webm): fully opaque at ~1.3–2.2s.
+// Measured from the 3.5s WebM (Persona_5_Stinger_Transition.webm): fully opaque at ~1.3–2.2s.
 // Swap well inside that window so neither page change nor scroll reset shows.
 export const STINGER_SWITCH_TIME = 1.5
 

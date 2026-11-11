@@ -123,7 +123,7 @@ export default function PageTransition({ phase, label, returning, onCovered, onC
         <video
           ref={videoRef}
           className="transition-video"
-          src={`${import.meta.env.BASE_URL}video/Persona 5 Stinger Transition.webm`}
+          src={`${import.meta.env.BASE_URL}video/Persona_5_Stinger_Transition.webm`}
           muted
           playsInline
           preload="auto"

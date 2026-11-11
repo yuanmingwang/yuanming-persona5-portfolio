@@ -136,7 +136,7 @@ export default function SocialsPage({ channels: items, backgroundVideo, headingR
                 <p className="social-action-status" role="status">{copyStatus?.id === selected.id ? copyStatus.message : isEmail ? 'Opens your email app.' : 'Opens the profile in a new tab.'}</p>
               </div>
               <footer className="social-card-footer">
-                {selected.confidantImage && <img src={assetUrl('character confidant icon', selected.confidantImage)} alt="" />}
+                {selected.confidantImage && <img src={assetUrl('character_confidant_icon', selected.confidantImage)} alt="" />}
                 <div><span>THE NEXT CONNECTION</span><p>Every good story starts with a conversation.</p></div>
                 <span className="social-footer-star" aria-hidden="true">★</span>
               </footer>

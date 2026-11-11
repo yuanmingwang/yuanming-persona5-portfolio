@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from 'react'
 
 // The array order is the playback order. After track 4, return to track 1.
 const tracks = [
-  { title: 'LIFE WILL CHANGE', file: '1. Life Will Change.mp3' },
-  { title: 'LAST SURPRISE', file: '2. Last Surprise.mp3' },
-  { title: 'BENEATH THE MASK', file: '3. Beneath the Mask.mp3' },
-  { title: 'RIVERS IN THE DESERT', file: '4. Rivers in the Desert.mp3' },
+  { title: 'LIFE WILL CHANGE', file: '1._Life_Will_Change.mp3' },
+  { title: 'LAST SURPRISE', file: '2._Last_Surprise.mp3' },
+  { title: 'BENEATH THE MASK', file: '3._Beneath_the_Mask.mp3' },
+  { title: 'RIVERS IN THE DESERT', file: '4._Rivers_in_the_Desert.mp3' },
 ]
 
 // Audio stays mounted while App switches between the menu and a page.

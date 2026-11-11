@@ -128,7 +128,7 @@ export default function ResumePage({ entries, backgroundVideo, headingRef, onBac
                 {category === 'education' && count('coursework') > 0 && <button className="utility-button resume-coursework-link" onClick={() => chooseCategory('coursework')}>EXPLORE COURSEWORK →</button>}
               </div>
               <footer className="resume-detail-footer">
-                {footerImages[selected.id] && <img src={`${import.meta.env.BASE_URL}image/character%20confidant%20icon/${encodeURIComponent(footerImages[selected.id]!)}`} alt="" />}
+                {footerImages[selected.id] && <img src={`${import.meta.env.BASE_URL}image/character_confidant_icon/${encodeURIComponent(footerImages[selected.id]!)}`} alt="" />}
                 <div><span>{profile.title.toUpperCase()}</span><p>THE RECORD CONTINUES.</p></div>
                 <span className="resume-footer-star" aria-hidden="true">★</span>
               </footer>

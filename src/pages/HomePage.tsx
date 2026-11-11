@@ -61,7 +61,7 @@ function HomePage({ items, onSelect, navigationDisabled = false }: HomePageProps
       <video
         ref={videoRef}
         className="menu-video"
-        src={`${import.meta.env.BASE_URL}video/Joker animated wallpaper.mp4`}
+        src={`${import.meta.env.BASE_URL}video/Joker_animated_wallpaper.mp4`}
         autoPlay={!motionPaused}
         loop
         muted
