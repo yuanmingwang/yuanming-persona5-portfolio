@@ -1,0 +1,5 @@
+id,order,menu_label,menu_subtitle,menu_image,detail_title,detail_description,detail_highlight,detail_character_image
+profile,1,PROFILE,WHO I AM,lavenza,Yuanming Wang,holder,holder,lavenza
+work,2,WORK,WHAT I DO,,"Game Developer, Software Developer, Data Engineer",holder,holder,
+location,3,LOCATION,WHERE I AM,,"Canada, BC, Vancouver",holder,holder,
+values,4,VALUES,PHILOSOPHY,,"Words are the counters of wise man, and the money of fools",holder,holder,
