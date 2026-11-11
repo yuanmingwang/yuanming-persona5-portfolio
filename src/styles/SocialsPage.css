@@ -78,3 +78,16 @@
   .social-footer-star { display: none; }
 }
 @media (prefers-reduced-motion: reduce) { .social-contact-card { animation: none; } }
+
+/* The initial invitation shares the detail column; no floating panel covers
+   the channel buttons. Opening/closing never redraws the visit's portraits. */
+.social-invitation { min-height: 510px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; padding: 30px 25px; transform: rotate(-5deg); }
+.social-invitation > img { width: 116px; height: 112px; object-fit: contain; padding: 6px; background: #fffaf0; box-shadow: 6px 6px 0 #e91036; transform: rotate(-7deg); margin: 0 0 25px 13px; }
+.social-invitation p { margin: 0; padding: 7px 12px; background: #101012; font-size: 14px; font-weight: 900; letter-spacing: .13em; }
+.social-invitation strong { max-width: 100%; padding: 7px 14px 10px; background: #fffaf0; color: #101012; box-shadow: 7px 7px 0 #e91036; font-family: Impact, 'Arial Black', sans-serif; font-size: clamp(30px, 3.5vw, 56px); font-style: italic; line-height: 1.08; overflow-wrap: anywhere; }
+.social-invitation > span { margin: 25px 0 0 12px; padding: 6px 9px; background: #101012d9; font-size: 9px; line-height: 1.8; font-weight: 900; letter-spacing: .11em; }
+.social-card-strip { align-items: center; }
+.social-close { border: 0; padding: 7px 10px; background: #101012; color: #fffaf0; font-size: 9px; font-weight: 900; white-space: nowrap; }
+.social-close:hover { background: #fffaf0; color: #101012; }
+@media (max-width: 900px) { .social-invitation { min-height: 350px; } }
+@media (max-width: 600px) { .social-invitation { padding: 25px 12px; } .social-invitation strong { font-size: 34px; } .social-invitation > img { width: 96px; height: 92px; } }

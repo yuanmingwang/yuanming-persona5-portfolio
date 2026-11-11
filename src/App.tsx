@@ -90,6 +90,7 @@ function App() {
             backgroundVideo={page?.pageBackgroundVideo}
             headingRef={headingRef}
             onBack={() => navigate(null)}
+            navigationDisabled={transition !== null}
           />
         ) : (
           <main className="content-page">
