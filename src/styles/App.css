@@ -1,0 +1,93 @@
+/* 1. The stage: video, red wash, and an angular paper cutout. */
+.home-page {
+  position: relative;
+  isolation: isolate;
+  min-height: 800px;
+  min-height: max(800px, 100svh);
+  overflow: hidden;
+  background: #c50c25;
+}
+.menu-video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 70% center; z-index: -4; }
+.menu-shade { position: absolute; inset: 0; z-index: -3; background: linear-gradient(90deg, #d90a2b 0%, #d90a2bda 18%, transparent 63%), linear-gradient(0deg, #13080bd9, transparent 35%); }
+.menu-paper { position: absolute; inset: 0; z-index: -2; background: #101012; clip-path: polygon(0 0, 47% 0, 39% 20%, 49% 26%, 43% 43%, 48% 48%, 39% 80%, 47% 100%, 0 100%); }
+.menu-paper::after { content: ''; position: absolute; inset: 0; opacity: .18; background-image: radial-gradient(#aaa 1px, transparent 1px); background-size: 6px 6px; mask-image: linear-gradient(90deg, black, transparent 50%); }
+
+/* 2. The identity: heavy type, tilted paper, and a small red accent. */
+.menu-header { position: relative; padding: 42px 0 0 5.5%; width: max-content; max-width: 90%; }
+.eyebrow { font-size: 11px; font-weight: 900; letter-spacing: .25em; }
+.eyebrow span { color: #ff183c; font-size: 22px; vertical-align: middle; margin-right: 8px; }
+.menu-header h1 { margin: 25px 0 14px; font-family: Impact, 'Arial Black', sans-serif; font-size: clamp(46px, 5.1vw, 82px); font-style: italic; font-weight: 900; line-height: .93; letter-spacing: -.025em; transform: rotate(-6deg); }
+.menu-header h1 > span { display: block; }
+.menu-header h1 > span:first-child { font-size: .66em; letter-spacing: .025em; margin: 0 0 5px 4px; }
+.menu-header h1 > span:nth-child(2) { background: #fffaf0; color: #121214; padding: 1px 15px 5px 8px; box-shadow: 7px 7px 0 #ec1237; }
+.title-star { display: inline-block; color: #e90e33; font-size: .6em; margin-left: 9px; vertical-align: middle; }
+.portfolio-tag { margin-top: 24px; font-size: 10px; font-weight: 800; letter-spacing: .22em; }
+
+/* 3. Menu rows: the data supplies the text; CSS supplies the attitude. */
+.menu-panel { position: relative; width: min(530px, 44%); margin: 55px 0 125px 5.5%; }
+.menu-kicker { margin: 0 0 20px 10px; color: #e2d5d5; font-size: 10px; font-weight: 800; letter-spacing: .22em; }
+.home-menu { display: flex; flex-direction: column; align-items: stretch; gap: 9px; }
+.menu-item { position: relative; isolation: isolate; display: flex; align-items: center; gap: 14px; width: 100%; min-height: 67px; padding: 7px 24px 7px 12px; border: 0; background: transparent; color: #fffaf0; text-align: left; transform: rotate(-4deg); transition: transform .15s ease, color .15s ease; }
+.menu-item:nth-child(even) { transform: rotate(-2deg) translateX(15px); }
+.menu-item::before, .menu-item::after { content: ''; position: absolute; inset: 0; z-index: -1; opacity: 0; clip-path: polygon(1% 6%, 100% 0, 94% 89%, 0 100%); transition: opacity .12s ease; }
+.menu-item::before { background: #e80d33; transform: translate(7px, 7px); }
+.menu-item::after { background: #fffaf0; }
+.menu-item.is-active { color: #101012; transform: rotate(-4deg) translateX(12px); }
+.menu-item.is-active::before, .menu-item.is-active::after { opacity: 1; }
+.menu-number { align-self: center; font-family: monospace; font-size: 12px; font-weight: bold; color: #f12b4b; }
+.menu-label { font-family: Impact, 'Arial Black', sans-serif; font-size: clamp(28px, 3.45vw, 54px); font-weight: 900; font-style: italic; line-height: 1.12; letter-spacing: -.02em; overflow-wrap: anywhere; }
+.menu-arrow { margin-left: auto; font-size: 29px; color: #e80d33; opacity: 0; }
+.is-active .menu-arrow { opacity: 1; }
+.menu-counter { margin: 28px 0 0 12px; font-family: monospace; font-weight: bold; font-size: 14px; color: #fa2348; }
+.menu-counter span { font-size: 10px; color: #c5bfc0; }
+
+/* 4. A calling card keeps the right side anchored without covering Joker. */
+.calling-card { position: absolute; right: 5%; bottom: 140px; display: flex; flex-direction: column; align-items: flex-start; transform: rotate(-9deg); }
+.calling-card span:first-child { background: #fffaf0; color: #131315; padding: 5px 9px; font-weight: 900; font-size: 14px; letter-spacing: .12em; }
+.calling-card strong { margin-left: 13px; background: #e51034; padding: 3px 12px; font-family: Impact, 'Arial Black', sans-serif; font-style: italic; font-size: clamp(28px, 3.2vw, 52px); box-shadow: 5px 5px 0 #131315; }
+.calling-card span:last-child { margin: 13px 0 0 20px; font-size: 9px; letter-spacing: .2em; font-weight: 900; text-shadow: 1px 1px 3px #000; }
+
+/* 5. Controls remain ordinary buttons: mouse, touch, and keyboard all work. */
+.menu-footer { position: absolute; bottom: 28px; left: 5.5%; right: 4%; display: flex; align-items: center; justify-content: flex-end; gap: 30px; flex-wrap: wrap; padding-left: 180px; }
+.utility-button { border: 1px solid #fffaf0; padding: 11px 16px; background: #131315; color: #fffaf0; font-size: 10px; font-weight: 900; letter-spacing: .1em; transform: skew(-7deg); }
+.utility-button:hover { color: #131315; background: #fffaf0; }
+.sound-control { position: absolute; z-index: 5; bottom: 25px; left: 5.5%; }
+.sound-button { font-size: 12px; padding: 10px 17px; box-shadow: 4px 4px 0 #e51034; }
+.sound-button span { color: #ff2448; margin-right: 6px; }
+.sound-caption { display: block; margin-top: 10px; font-size: 8px; font-weight: 800; letter-spacing: .15em; }
+.keyboard-hint { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; font-size: 9px; letter-spacing: .1em; font-weight: 800; }
+.keyboard-hint span { margin-left: 10px; }
+kbd { display: inline-block; padding: 4px 7px; border: 1px solid #fff8; background: #1119; font-family: inherit; font-size: 12px; }
+.content-page { min-height: 100svh; padding: 60px 8% 130px; background: linear-gradient(120deg, #171317 65%, #b50827 65%); }
+.content-page .eyebrow { margin-top: 90px; color: #ff3455; }
+.content-page h1 { font-family: Impact, 'Arial Black', sans-serif; font-size: clamp(40px, 9vw, 120px); font-style: italic; overflow-wrap: anywhere; margin: 20px 0; }
+.content-page > p:last-child { color: #e1d8d8; line-height: 1.7; }
+
+@media (min-width: 1600px) { .menu-panel { margin-top: 80px; } .menu-item { min-height: 80px; } }
+@media (max-width: 900px) {
+  .menu-paper { clip-path: polygon(0 0, 57% 0, 50% 40%, 60% 48%, 48% 100%, 0 100%); }
+  .menu-panel { width: 49%; }
+  .menu-label { font-size: 36px; }
+  .menu-item { gap: 9px; padding-right: 14px; }
+  .menu-header h1 { font-size: 62px; }
+  .calling-card { right: 4%; bottom: 170px; }
+  .keyboard-hint { display: none; }
+}
+@media (max-width: 600px) {
+  .home-page { min-height: max(850px, 100svh); }
+  .menu-video { object-position: 65% center; opacity: .52; }
+  .menu-shade { background: linear-gradient(90deg, #130b11ed, #20070b55), linear-gradient(0deg, #0f0c10, transparent 90%); }
+  .menu-paper { opacity: .5; clip-path: polygon(0 0, 85% 0, 50% 100%, 0 100%); }
+  .menu-header { padding-top: 28px; margin-left: 2%; }
+  .menu-header h1 { font-size: clamp(46px, 12vw, 65px); }
+  .menu-panel { margin-top: 65px; margin-left: 7%; width: 80%; margin-bottom: 185px; }
+  .menu-label { font-size: clamp(30px, 8.5vw, 46px); }
+  .menu-item { min-height: 64px; }
+  .calling-card { display: none; }
+  .menu-footer { bottom: 34px; padding-left: 140px; }
+  .motion-button { max-width: 135px; line-height: 1.4; }
+  .sound-control { left: 7%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; }
+}
