@@ -6,6 +6,8 @@ import PageTransition from './components/PageTransition'
 import PageBackground from './components/PageBackground'
 import AboutPage from './pages/AboutPage'
 import ResumePage from './pages/ResumePage'
+import SocialsPage from './pages/SocialsPage'
+import { loadSocials, localSocials } from './lib/socialsContent'
 import { loadResume, localResume } from './lib/resumeContent'
 import { loadAbout, localAbout } from './lib/aboutContent'
 import { initialNavigation, navigationReducer } from './lib/navigation'
@@ -15,6 +17,7 @@ function App() {
   const [menu, setMenu] = useState(localMenu)
   const [aboutSections, setAboutSections] = useState(localAbout)
   const [resumeEntries, setResumeEntries] = useState(localResume)
+  const [socialChannels, setSocialChannels] = useState(localSocials)
   const [navigation, dispatch] = useReducer(navigationReducer, initialNavigation)
   const { page: currentPage, transition } = navigation
   const pageRef = useRef<HTMLDivElement>(null)
@@ -32,6 +35,9 @@ function App() {
     })
     loadResume(controller.signal).then(setResumeEntries).catch(error => {
       if (!controller.signal.aborted) console.warn('Using local Resume CSV because remote content could not load.', error)
+    })
+    loadSocials(controller.signal).then(setSocialChannels).catch(error => {
+      if (!controller.signal.aborted) console.warn('Using local Socials CSV because remote content could not load.', error)
     })
     return () => controller.abort()
   }, [])
@@ -73,6 +79,14 @@ function App() {
           <ResumePage
             key={JSON.stringify(resumeEntries)}
             entries={resumeEntries}
+            backgroundVideo={page?.pageBackgroundVideo}
+            headingRef={headingRef}
+            onBack={() => navigate(null)}
+          />
+        ) : currentPage === 'socials' ? (
+          <SocialsPage
+            key={JSON.stringify(socialChannels)}
+            channels={socialChannels}
             backgroundVideo={page?.pageBackgroundVideo}
             headingRef={headingRef}
             onBack={() => navigate(null)}
