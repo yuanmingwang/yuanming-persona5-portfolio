@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc -b && vite build",
     "lint": "eslint .",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "predev": "node scripts/generate-image-manifest.mjs",
+    "prebuild": "node scripts/generate-image-manifest.mjs"
   },
   "dependencies": {
     "papaparse": "^5.7.0",
