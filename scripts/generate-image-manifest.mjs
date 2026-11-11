@@ -4,7 +4,7 @@ import { fileURLToPath } from 'node:url'
 // Browsers cannot list public folders. Index filenames before Vite starts/builds.
 const project = new URL('../', import.meta.url)
 const catalog = {}
-for (const [key, folder] of Object.entries({ menu: 'menu', character: 'character', confidant: 'character confidant icon' })) {
+for (const [key, folder] of Object.entries({ menu: 'menu', character: 'character', confidant: 'character_confidant_icon' })) {
   const directory = new URL(`public/image/${folder}/`, project)
   let entries = []
   try {
