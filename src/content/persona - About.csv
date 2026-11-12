@@ -1,5 +1,5 @@
 id,order,menu_label,menu_subtitle,menu_image,detail_title,detail_description,detail_highlight,detail_character_image
-profile,1,PROFILE,WHO I AM,lavenza,Yuanming Wang,holder,holder,lavenza
-work,2,WORK,WHAT I DO,,"Game Developer, Software Developer, Data Engineer",holder,holder,
-location,3,LOCATION,WHERE I AM,,"Canada, BC, Vancouver",holder,holder,
-values,4,VALUES,PHILOSOPHY,,"Words are the counters of wise man, and the money of fools",holder,holder,
+profile,1,PROFILE,WHO I AM,lavenza,Yuanming Wang,"I'm Yuanming Wang, a software developer working across games, real-time graphics, and data. My background connects computer science, data science and engineering with hands-on experience building gameplay systems, interactive interfaces, and 3D visualizations.","From the logic behind a system to the experience on screen, I enjoy making the pieces work together.",lavenza
+work,2,WORK,WHAT I DO,,"Game Developer, Software Developer, Data Engineer","I build software that people can interact with: gameplay and UI features, real-time 3D applications, and tools that turn data into something useful. My work includes PUBG Mobile’s Home System at Tencent, parking visualization at AutoX, and data-driven gameplay systems at LightPaw Networks.",C++ and C# for interactive systems. Python for data and machine learning. Curiosity connects the two.,
+location,3,LOCATION,WHERE I AM,,"Canada, BC, Vancouver","I'm currently based in Vancouver, British Columbia. My path has taken me from DePauw University in Indiana, Columbia University in New York, and the University of Victoria in Canada. Each chapter has added a different perspective to how I approach technology and collaboration.",,
+values,4,VALUES,PHILOSOPHY,,"Words are the counters of wise man, and the money of fools",,Think clearly. Build carefully. Let the work speak.,
