@@ -1,5 +1,6 @@
+import { useMenuKeyboard } from '../hooks/useMenuKeyboard'
 import { useEffect, useRef, useState } from 'react'
-import type { KeyboardEvent, Ref } from 'react'
+import type { Ref } from 'react'
 import { createAboutVisit } from '../lib/aboutContent'
 import type { AboutItem } from '../lib/about'
 import PageBackground from '../components/PageBackground'
@@ -48,17 +49,13 @@ export default function AboutPage({ sections: items, backgroundVideo, headingRef
     return () => window.removeEventListener('keydown', handleEscape)
   }, [revealed, activeIndex, navigationDisabled])
 
-  function handleMenuKeys(event: KeyboardEvent<HTMLElement>) {
-    if (!['ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return
-    event.preventDefault()
-    const buttons = Array.from(menuRef.current?.querySelectorAll<HTMLButtonElement>('.about-menu-item') ?? [])
-    let next = Math.max(0, buttons.indexOf(event.target as HTMLButtonElement))
-    if (event.key === 'ArrowDown') next = (next + 1) % sections.length
-    if (event.key === 'ArrowUp') next = (next - 1 + sections.length) % sections.length
-    if (event.key === 'Home') next = 0
-    if (event.key === 'End') next = sections.length - 1
-    menuRef.current?.querySelectorAll<HTMLButtonElement>('.about-menu-item')[next]?.focus({ preventScroll: true })
-  }
+  useMenuKeyboard({
+    menuRef: menuRef,
+    selector: '.about-menu-item',
+    activeIndex: activeIndex,
+    onMove: index => setActiveId(sections[index].id),
+    disabled: navigationDisabled,
+  })
 
   function changeSection(offset: number) {
     setActiveId(sections[(activeIndex + offset + sections.length) % sections.length].id)
@@ -77,7 +74,7 @@ export default function AboutPage({ sections: items, backgroundVideo, headingRef
       <div className="about-layout">
         <aside className="about-sidebar">
           <p className="about-section-label"><span aria-hidden="true">★</span> PERSONAL FILES</p>
-          <nav ref={menuRef} className="about-menu" aria-label="About sections" onKeyDown={handleMenuKeys}>
+          <nav ref={menuRef} className="about-menu" aria-label="About sections">
             {sections.map((section, index) => (
               <button
                 key={section.id}

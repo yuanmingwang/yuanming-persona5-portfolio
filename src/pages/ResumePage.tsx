@@ -1,5 +1,6 @@
+import { useMenuKeyboard } from '../hooks/useMenuKeyboard'
 import { useMemo, useRef, useState } from 'react'
-import type { KeyboardEvent, Ref } from 'react'
+import type { Ref } from 'react'
 import PageBackground from '../components/PageBackground'
 import images from '../content/about-images.json'
 import { pickImage } from '../lib/about'
@@ -12,9 +13,10 @@ type ResumePageProps = {
   backgroundVideo?: string
   headingRef: Ref<HTMLHeadingElement>
   onBack: () => void
+  navigationDisabled: boolean
 }
 
-export default function ResumePage({ entries, backgroundVideo, headingRef, onBack }: ResumePageProps) {
+export default function ResumePage({ entries, backgroundVideo, headingRef, onBack, navigationDisabled }: ResumePageProps) {
   const categories = resumeCategories.filter(category => entries.some(entry => entry.section === category.id))
   const [category, setCategory] = useState<ResumeCategory>(categories[0].id)
   const [selectedId, setSelectedId] = useState('')
@@ -47,17 +49,13 @@ export default function ResumePage({ entries, backgroundVideo, headingRef, onBac
     }
   }
 
-  function handleListKeys(event: KeyboardEvent<HTMLElement>) {
-    if (!['ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return
-    event.preventDefault()
-    const buttons = Array.from(listRef.current?.querySelectorAll<HTMLButtonElement>('.resume-record') ?? [])
-    let next = Math.max(0, buttons.indexOf(event.target as HTMLButtonElement))
-    if (event.key === 'ArrowDown') next = (next + 1) % buttons.length
-    if (event.key === 'ArrowUp') next = (next - 1 + buttons.length) % buttons.length
-    if (event.key === 'Home') next = 0
-    if (event.key === 'End') next = buttons.length - 1
-    buttons[next]?.focus()
-  }
+  useMenuKeyboard({
+    menuRef: listRef,
+    selector: '.resume-record',
+    activeIndex: Math.max(0, visible.findIndex(entry => entry.id === selected?.id)),
+    onMove: index => setSelectedId(visible[index].id),
+    disabled: navigationDisabled,
+  })
 
   return (
     <main className="content-page resume-page">
@@ -99,7 +97,7 @@ export default function ResumePage({ entries, backgroundVideo, headingRef, onBac
         <aside className="resume-index">
           <div className="resume-index-heading"><span>{categoryLabel}</span><span>{visible.length} {visible.length === 1 ? 'FILE' : 'FILES'}</span></div>
           <label className="resume-search"><span>FIND AN ENTRY</span><input type="search" value={query} onChange={event => setQuery(event.target.value)} placeholder="Search titles, tools, or results" /></label>
-          <nav ref={listRef} className="resume-records" aria-label={`${categoryLabel.toLowerCase()} entries`} onKeyDown={handleListKeys}>
+          <nav ref={listRef} className="resume-records" aria-label={`${categoryLabel.toLowerCase()} entries`}>
             {visible.map((entry, index) => (
               <button key={entry.id} className={`resume-record${selected?.id === entry.id ? ' is-active' : ''}`} aria-pressed={selected?.id === entry.id} onClick={() => chooseEntry(entry)}>
                 <span className="resume-record-number">{String(index + 1).padStart(2, '0')}</span>

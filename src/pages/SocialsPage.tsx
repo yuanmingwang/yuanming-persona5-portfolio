@@ -1,5 +1,6 @@
+import { useMenuKeyboard } from '../hooks/useMenuKeyboard'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { KeyboardEvent, Ref } from 'react'
+import type { Ref } from 'react'
 import PageBackground from '../components/PageBackground'
 import images from '../content/about-images.json'
 import { assignSocialImages, socialCopyValue } from '../lib/socials'
@@ -63,17 +64,13 @@ export default function SocialsPage({ channels: items, backgroundVideo, headingR
     setCopyStatus(null)
   }
 
-  function handleKeys(event: KeyboardEvent<HTMLElement>) {
-    if (!['ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return
-    event.preventDefault()
-    const buttons = Array.from(menuRef.current?.querySelectorAll<HTMLButtonElement>('.social-channel') ?? [])
-    let next = Math.max(0, buttons.indexOf(event.target as HTMLButtonElement))
-    if (event.key === 'ArrowDown') next = (next + 1) % buttons.length
-    if (event.key === 'ArrowUp') next = (next - 1 + buttons.length) % buttons.length
-    if (event.key === 'Home') next = 0
-    if (event.key === 'End') next = buttons.length - 1
-    buttons[next]?.focus({ preventScroll: true })
-  }
+  useMenuKeyboard({
+    menuRef: menuRef,
+    selector: '.social-channel',
+    activeIndex: selectedIndex,
+    onMove: index => { setSelectedId(channels[index].id); setCopyStatus(null) },
+    disabled: navigationDisabled,
+  })
 
   async function copyAddress() {
     try {
@@ -98,7 +95,7 @@ export default function SocialsPage({ channels: items, backgroundVideo, headingR
       <div className="socials-layout">
         <aside className="socials-sidebar">
           <p className="socials-section-label"><span aria-hidden="true">★</span> CHOOSE YOUR CHANNEL <span>{String(channels.length).padStart(2, '0')}</span></p>
-          <nav ref={menuRef} className="social-channels" aria-label="Social channels" onKeyDown={handleKeys}>
+          <nav ref={menuRef} className="social-channels" aria-label="Social channels">
             {channels.map((channel, index) => (
               <button
                 key={channel.id}

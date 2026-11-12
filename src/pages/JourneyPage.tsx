@@ -1,5 +1,6 @@
+import { useMenuKeyboard } from '../hooks/useMenuKeyboard'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import type { KeyboardEvent, Ref } from 'react'
+import type { Ref } from 'react'
 import PageBackground from '../components/PageBackground'
 import { filterJourney, journeyTypeLabels } from '../lib/journey'
 import type { JourneyChapter, JourneyFilter } from '../lib/journey'
@@ -64,18 +65,13 @@ export default function JourneyPage({ chapters, backgroundVideo, headingRef, onB
     setRevealed(false)
   }
 
-  function handleKeys(event: KeyboardEvent<HTMLElement>) {
-    if (!['ArrowUp', 'ArrowDown', 'Home', 'End'].includes(event.key)) return
-    event.preventDefault()
-    const buttons = Array.from(menuRef.current?.querySelectorAll<HTMLButtonElement>('.journey-step') ?? [])
-    let next = Math.max(0, buttons.indexOf(event.target as HTMLButtonElement))
-    if (event.key === 'ArrowDown') next = (next + 1) % buttons.length
-    if (event.key === 'ArrowUp') next = (next - 1 + buttons.length) % buttons.length
-    if (event.key === 'Home') next = 0
-    if (event.key === 'End') next = buttons.length - 1
-    buttons[next]?.focus({ preventScroll: true })
-    buttons[next]?.scrollIntoView({ block: 'nearest', behavior: 'instant' })
-  }
+  useMenuKeyboard({
+    menuRef: menuRef,
+    selector: '.journey-step',
+    activeIndex: selectedIndex,
+    onMove: index => setSelectedId(visible[index].id),
+    disabled: navigationDisabled,
+  })
 
   function openChapter(id: string) { setSelectedId(id); setRevealed(true) }
   function nextChapter(offset: number) { openChapter(visible[(selectedIndex + offset + visible.length) % visible.length].id) }
@@ -97,7 +93,7 @@ export default function JourneyPage({ chapters, backgroundVideo, headingRef, onB
         <aside className="journey-sidebar">
           <div className="journey-index-heading"><span>★ THE CHAPTER INDEX</span><span>{String(visible.length).padStart(2, '0')} FILES</span></div>
           <nav className="journey-filters" aria-label="Journey filters">{filters.map(item => <button key={item.id} aria-pressed={filter === item.id} className={filter === item.id ? 'is-active' : ''} onClick={() => selectFilter(item.id)}>{item.label}</button>)}</nav>
-          <nav ref={menuRef} className="journey-list" aria-label="Journey chapters" onKeyDown={handleKeys}>
+          <nav ref={menuRef} className="journey-list" aria-label="Journey chapters">
             {visible.map(chapter => (
               <button key={chapter.id} className={`journey-step${selected?.id === chapter.id ? ' is-active' : ''}`} aria-expanded={revealed && selected?.id === chapter.id} aria-controls="journey-story" onClick={() => openChapter(chapter.id)}>
                 <img src={iconUrl(chapter.icon)} alt="" />

@@ -87,7 +87,15 @@ function HomePage({ items, onSelect, navigationDisabled = false }: HomePageProps
               autoFocus={!navigationDisabled && index === 0}
               className={`menu-item ${index === activeIndex ? 'is-active' : ''}`}
               onFocus={() => setActiveId(item.id)}
-              onPointerEnter={() => setActiveId(item.id)}
+              onPointerEnter={event => {
+                // When switching from keys to the mouse, move existing menu
+                // focus with the highlight so Enter confirms the visible item.
+                // Hovering must not steal focus from sound/background controls.
+                if (menuRef.current?.contains(document.activeElement)) {
+                  event.currentTarget.focus({ preventScroll: true })
+                }
+                setActiveId(item.id)
+              }}
               onClick={() => onSelect(item.id)}
             >
               <span className="menu-number">{String(index + 1).padStart(2, '0')}</span>

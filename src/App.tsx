@@ -88,6 +88,7 @@ function App() {
             backgroundVideo={page?.pageBackgroundVideo}
             headingRef={headingRef}
             onBack={() => navigate(null)}
+            navigationDisabled={transition !== null}
           />
         ) : currentPage === 'socials' ? (
           <SocialsPage

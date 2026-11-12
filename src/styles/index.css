@@ -17,5 +17,20 @@
 body { margin: 0; min-width: 320px; }
 button { font: inherit; cursor: pointer; }
 button:focus-visible { outline: 2px solid #fffaf0; outline-offset: 6px; }
+/* These selected menu items already show a strong Persona highlight.
+   Keep keyboard focus without drawing a second rectangle around it. */
+.menu-item.is-active:focus-visible,
+.about-menu-item.is-active:focus-visible,
+.resume-record.is-active:focus-visible,
+.social-channel.is-active:focus-visible,
+.journey-step.is-active:focus-visible { outline: none; }
+/* Headings receive focus for page/detail announcements, not as controls.
+   Keep them readable without the browser's blue keyboard-focus rectangle. */
+h1[tabindex="-1"]:focus,
+h2[tabindex="-1"]:focus { outline: none; }
 button { -webkit-tap-highlight-color: transparent; }
 ::selection { background: #ef1238; color: white; }
+
+/* Leave room for the selected item's outline/shadow when keyboard navigation
+   reveals it inside a list or the document viewport. */
+.about-menu-item, .resume-record, .social-channel, .journey-step { scroll-margin-block: 12px; }
