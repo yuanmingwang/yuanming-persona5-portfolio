@@ -8,6 +8,8 @@ import AboutPage from './pages/AboutPage'
 import ResumePage from './pages/ResumePage'
 import SocialsPage from './pages/SocialsPage'
 import JourneyPage from './pages/JourneyPage'
+import QuestionsPage from './pages/QuestionsPage'
+import { loadQuestions, localQuestions } from './lib/questionsContent'
 import { loadJourney, localJourney } from './lib/journeyContent'
 import { loadSocials, localSocials } from './lib/socialsContent'
 import { loadResume, localResume } from './lib/resumeContent'
@@ -21,6 +23,7 @@ function App() {
   const [resumeEntries, setResumeEntries] = useState(localResume)
   const [socialChannels, setSocialChannels] = useState(localSocials)
   const [journeyChapters, setJourneyChapters] = useState(localJourney)
+  const [questions, setQuestions] = useState(localQuestions)
   const [navigation, dispatch] = useReducer(navigationReducer, initialNavigation)
   const { page: currentPage, transition } = navigation
   const pageRef = useRef<HTMLDivElement>(null)
@@ -44,6 +47,9 @@ function App() {
     })
     loadJourney(controller.signal).then(setJourneyChapters).catch(error => {
       if (!controller.signal.aborted) console.warn('Using local Journey CSV because remote content could not load.', error)
+    })
+    loadQuestions(controller.signal).then(setQuestions).catch(error => {
+      if (!controller.signal.aborted) console.warn('Using local Questions CSV because remote content could not load.', error)
     })
     return () => controller.abort()
   }, [])
@@ -103,6 +109,15 @@ function App() {
           <JourneyPage
             key={JSON.stringify(journeyChapters)}
             chapters={journeyChapters}
+            backgroundVideo={page?.pageBackgroundVideo}
+            headingRef={headingRef}
+            onBack={() => navigate(null)}
+            navigationDisabled={transition !== null}
+          />
+        ) : currentPage === 'questions' ? (
+          <QuestionsPage
+            key={JSON.stringify(questions)}
+            questions={questions}
             backgroundVideo={page?.pageBackgroundVideo}
             headingRef={headingRef}
             onBack={() => navigate(null)}

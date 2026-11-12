@@ -107,7 +107,7 @@ export default function ResumePage({ entries, backgroundVideo, headingRef, onBac
             ))}
           </nav>
           {!visible.length && <p className="resume-empty">No entries match this search. <button onClick={() => setQuery('')}>Clear search</button></p>}
-          <p className="resume-index-hint"><kbd>↑</kbd> <kbd>↓</kbd> BROWSE <kbd>↵</kbd> OPEN</p>
+          <p className="resume-index-hint"><kbd>↑</kbd> <kbd>↓</kbd> SELECT <kbd>↵</kbd> REVEAL</p>
         </aside>
 
         <section className="resume-detail-slot" aria-label="Resume entry details">

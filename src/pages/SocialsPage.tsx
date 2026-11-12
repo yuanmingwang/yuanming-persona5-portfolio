@@ -110,7 +110,7 @@ export default function SocialsPage({ channels: items, backgroundVideo, headingR
               </button>
             ))}
           </nav>
-          <p className="socials-key-hint"><kbd>↑</kbd> <kbd>↓</kbd> SELECT <kbd>↵</kbd> VIEW</p>
+          <p className="socials-key-hint"><kbd>↑</kbd> <kbd>↓</kbd> SELECT <kbd>↵</kbd> REVEAL</p>
           <div className="socials-side-note"><span>TAKE YOUR TIME.</span><p>Pick a channel. Let’s make a connection.</p></div>
         </aside>
 

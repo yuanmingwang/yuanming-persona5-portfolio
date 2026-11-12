@@ -102,7 +102,7 @@ export default function JourneyPage({ chapters, backgroundVideo, headingRef, onB
               </button>
             ))}
           </nav>
-          <p className="journey-key-hint"><kbd>↑</kbd> <kbd>↓</kbd> BROWSE <kbd>↵</kbd> REVEAL</p>
+          <p className="journey-key-hint"><kbd>↑</kbd> <kbd>↓</kbd> SELECT <kbd>↵</kbd> REVEAL</p>
           <p className="journey-date-note">Study and work chapters can overlap.</p>
         </aside>
 
