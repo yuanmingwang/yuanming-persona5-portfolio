@@ -73,9 +73,9 @@ function HomePage({ items, onSelect, navigationDisabled = false }: HomePageProps
       <div className="menu-paper" aria-hidden="true" />
 
       <header className="menu-header">
-        {/* <p className="eyebrow"><span aria-hidden="true">★</span> TAKE YOUR TIME</p> */}
+        <p className="eyebrow"><span aria-hidden="true">★</span> TAKE YOUR TIME</p>
         <h1><span>YUANMING’S</span><span>PERSONA<span className="title-star" aria-hidden="true">★</span></span></h1>
-        {/* <p className="portfolio-tag">THE PORTFOLIO / VOL. 01</p> */}
+        <p className="portfolio-tag">THE PORTFOLIO / VOL. 01</p>
       </header>
 
       <section className="menu-panel" aria-label="Portfolio menu">
