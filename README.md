@@ -11,6 +11,7 @@ A Persona 5–inspired portfolio for Yuanming Wang, built with **React, TypeScri
 - **Socials:** GitHub, LinkedIn, and email cards with Open and Copy actions.
 - **Journey:** study, work, and location chapters with school and city artwork.
 - **Questions:** a conversation-style introduction to the person behind the work.
+- **Arcade:** an expandable demo catalog featuring Dino Runner, with Human and AI controls and a live vision inspector.
 
 The site uses red, black, and cream styling, character artwork, transparent video transitions, and responsive layouts. Text is editable through CSV files or published Google Sheets. It is a static website; no backend or Google account sign-in is required for visitors.
 
@@ -68,6 +69,10 @@ The website works with the bundled files in `src/content` without connecting a s
 Open them in a spreadsheet editor or a text editor. Keep the header row, give each row a unique `id`, and use numeric `order` values. Changing a label does not require changing its ID. Keep the existing menu IDs so each button still opens its intended page.
 
 Fields containing commas or line breaks need CSV quoting; a spreadsheet's CSV export handles this for you. In the Résumé `bullets` cell and Journey `highlights` cell, use actual line breaks for separate bullets. Use `|` between tags/topics. Blank lines in a Questions `answer` create paragraphs. The Résumé requires exactly one `profile` row.
+
+A published Menu sheet can add or reorder the `arcade` row. Older sheets get the bundled Arcade entry at the end of the menu.
+
+Dino Runner loads when you open Arcade. Its logistic classifier uses two grayscale frames to estimate obstacle gap and closing speed. To regenerate the bundled weights from synthetic frame pairs, run `node scripts/train-dino.mjs`. Add future demos to the catalog in `src/pages/ArcadePage.tsx`.
 
 Each CSV is separate: editing the résumé does not automatically update About, Journey, Questions, or the original Google Doc. Local edits appear during development; updating the deployed site requires a new deployment.
 
@@ -208,4 +213,23 @@ Rerunning an old workflow uses the same source version. A GitHub settings-only f
 
 ## Technical reference
 
-For the code map, full CSV schemas, and implementation details, read [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). Instructions for AI-assisted development live separately in [AGENTS.md](AGENTS.md).
+For the code map, full CSV schemas, and implementation details, read [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md). 
+
+Background Video:
+Wallpaper Engine, author steam page: https://steamcommunity.com/id/stylegasm/
+
+Page transition video:
+https://www.youtube.com/watch?v=Nf3LuPC548g&t=12s
+
+Audio: 
+https://downloads.khinsider.com/game-soundtracks/album/persona-5-royal-the-complete-soundtrack
+
+Menu image: 
+https://www.tumblr.com/jakku-san/620012944745512960/noosey-woosey-noosey-woosey-noosey-woosey?utm_source=Pinterest&utm_medium=organic&redirect_to=%2Fjakku-san%2F620012944745512960%2Fnoosey-woosey-noosey-woosey-noosey-woosey&source=permalink_login_wall
+
+Character image: 
+https://www.spriters-resource.com/mobile/chainchronicle3/asset/98520/
+
+Character confidant icon:
+https://www.pinterest.com/livxotic/persona-5-confidant-icons/
+

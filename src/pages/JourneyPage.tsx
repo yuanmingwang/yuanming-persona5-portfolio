@@ -91,7 +91,10 @@ export default function JourneyPage({ chapters, backgroundVideo, headingRef, onB
 
       <div className="journey-layout">
         <aside className="journey-sidebar">
-          <div className="journey-index-heading"><span>★ THE CHAPTER INDEX</span><span>{String(visible.length).padStart(2, '0')} FILES</span></div>
+          <div className="journey-index-heading">
+            <span>★ THE CHAPTER INDEX</span>
+            <span>{String(visible.length).padStart(2, '0')} FILES</span>
+          </div>
           <nav className="journey-filters" aria-label="Journey filters">{filters.map(item => <button key={item.id} aria-pressed={filter === item.id} className={filter === item.id ? 'is-active' : ''} onClick={() => selectFilter(item.id)}>{item.label}</button>)}</nav>
           <nav ref={menuRef} className="journey-list" aria-label="Journey chapters">
             {visible.map(chapter => (

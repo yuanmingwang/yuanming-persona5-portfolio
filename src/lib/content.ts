@@ -60,5 +60,11 @@ export async function loadMenu(signal: AbortSignal): Promise<MenuItem[]> {
 
   const response = await fetch(url, { signal, cache: 'no-store' })
   if (!response.ok) throw new Error(`Menu request failed: ${response.status}`)
-  return parseMenu(await response.text())
+  const remoteMenu = parseMenu(await response.text())
+  if (remoteMenu.some(item => item.id === 'arcade')) return remoteMenu
+
+  // An older published menu can still supply every other item while Arcade rolls out.
+  const arcade = localMenu.find(item => item.id === 'arcade')
+  if (!arcade) return remoteMenu
+  return [...remoteMenu, { ...arcade, order: remoteMenu[remoteMenu.length - 1].order + 1 }]
 }

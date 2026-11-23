@@ -9,6 +9,7 @@ import ResumePage from './pages/ResumePage'
 import SocialsPage from './pages/SocialsPage'
 import JourneyPage from './pages/JourneyPage'
 import QuestionsPage from './pages/QuestionsPage'
+import ArcadePage from './pages/ArcadePage'
 import { loadQuestions, localQuestions } from './lib/questionsContent'
 import { loadJourney, localJourney } from './lib/journeyContent'
 import { loadSocials, localSocials } from './lib/socialsContent'
@@ -122,6 +123,12 @@ function App() {
             headingRef={headingRef}
             onBack={() => navigate(null)}
             navigationDisabled={transition !== null}
+          />
+        ) : currentPage === 'arcade' ? (
+          <ArcadePage
+            backgroundVideo={page?.pageBackgroundVideo}
+            headingRef={headingRef}
+            onBack={() => navigate(null)}
           />
         ) : (
           <main className="content-page">
