@@ -8,7 +8,6 @@ export const GROUND = 38
 
 const DINO_X = 10
 export const DINO_FRONT = DINO_X + 14
-const DINO_HEIGHT = 13
 const DINO_PIXELS = [
   '        ##### ',
   '       #######',
@@ -24,6 +23,14 @@ const DINO_PIXELS = [
   '   ## ##      ',
   '   ## ##      ',
 ]
+
+const DINO_HEIGHT = DINO_PIXELS.length
+const DINO_BODY = DINO_PIXELS.slice(0, -2)
+const DINO_STRIDES = [
+  [...DINO_BODY, '   ## ##      ', '  ###         '],
+  [...DINO_BODY, '  ##  ##      ', '      ###     '],
+]
+const STRIDE_FRAME_DISTANCE = 6
 
 const BACKGROUND = 17
 const SPAWN_X = FRAME_WIDTH + 5
@@ -43,6 +50,11 @@ export type Runner = {
   distance: number
   speed: number
   crashed: boolean
+}
+
+// Distance is the displayed score before rounding down to an integer.
+export function crossedScoreMilestone(previous: number, current: number) {
+  return Math.floor(current / 1000) > Math.floor(previous / 1000)
 }
 
 export function createRunner(): Runner {
@@ -93,7 +105,7 @@ function hitsDino({ x, shape }: Obstacle, rise: number) {
   return shape.pixels.some(pixel => DINO_PIXELS[rowOffset + pixel.y]?.[left + pixel.x - DINO_X] === '#')
 }
 
-export function drawObservation(pixels: Uint8Array, rise: number, obstacles: readonly Obstacle[]) {
+export function drawObservation(pixels: Uint8Array, rise: number, obstacles: readonly Obstacle[], distance = 0) {
   pixels.fill(BACKGROUND)
 
   function ink(x: number, y: number, shade: number) {
@@ -103,7 +115,10 @@ export function drawObservation(pixels: Uint8Array, rise: number, obstacles: rea
   }
 
   const top = GROUND - DINO_HEIGHT - Math.round(rise)
-  for (const [y, row] of DINO_PIXELS.entries()) {
+  // Advance the feet with the track so their cadence follows running speed.
+  const stride = Math.floor(distance / STRIDE_FRAME_DISTANCE) % DINO_STRIDES.length
+  const dinoPixels = distance > 0 && rise === 0 ? DINO_STRIDES[stride] : DINO_PIXELS
+  for (const [y, row] of dinoPixels.entries()) {
     for (let x = 0; x < row.length; x++) {
       if (row[x] === '#') ink(DINO_X + x, top + y, DINO_SHADE)
     }

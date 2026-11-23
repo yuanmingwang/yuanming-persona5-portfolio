@@ -249,9 +249,14 @@
   touch-action: manipulation;
 }
 
-.dino-screen canvas:focus-visible {
-  outline: 2px solid var(--arcade-paper);
-  outline-offset: -3px;
+.dino-screen canvas:focus {
+  outline: none;
+}
+
+/* Keep keyboard focus visible on the instructions beside the playing field. */
+.dino-screen:has(canvas:focus-visible) ~ .dino-help {
+  color: var(--arcade-paper);
+  box-shadow: inset 3px 0 var(--arcade-red);
 }
 
 .dino-screen-status {
@@ -275,6 +280,11 @@
 .dino-game-footer {
   flex-wrap: wrap;
   border-top: 1px solid #603445;
+}
+
+.dino-sfx[aria-pressed="true"] {
+  border-color: #ff607a;
+  box-shadow: 2px 2px 0 var(--arcade-red);
 }
 
 .dino-score {

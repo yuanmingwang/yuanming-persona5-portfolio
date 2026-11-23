@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from 'react'
+import { createDinoAudio } from './audio'
 import {
-  createRunner, drawObservation, FRAME_HEIGHT, FRAME_WIDTH, jump,
+  createRunner, crossedScoreMilestone, drawObservation, FRAME_HEIGHT, FRAME_WIDTH, jump,
   SAMPLE_TICKS, stepRunner, TICKS_PER_SECOND,
 } from './runner'
 import { paintGame, paintObservation } from './render'
@@ -24,9 +25,11 @@ function createSession() {
 export default function DinoRunner() {
   const sessionRef = useRef<ReturnType<typeof createSession> | null>(null)
   const modeRef = useRef<Mode>('human')
+  const audioRef = useRef<ReturnType<typeof createDinoAudio> | null>(null)
   const screenRef = useRef<HTMLCanvasElement>(null)
   const inputRef = useRef<HTMLCanvasElement>(null)
   const previousRef = useRef<HTMLCanvasElement>(null)
+  const [effectsEnabled, setEffectsEnabled] = useState(true)
   const [mode, setMode] = useState<Mode>('human')
   const [phase, setPhase] = useState<Phase>('ready')
   const [runNumber, setRunNumber] = useState(0)
@@ -35,6 +38,11 @@ export default function DinoRunner() {
   const [jumps, setJumps] = useState(0)
   const [vision, setVision] = useState<ReturnType<typeof predictJump> | null>(null)
   const [action, setAction] = useState<Action>('Waiting')
+
+  useEffect(() => () => {
+    audioRef.current?.close()
+    audioRef.current = null
+  }, [])
 
   useEffect(() => {
     const session = createSession()
@@ -62,11 +70,13 @@ export default function DinoRunner() {
       const { run } = current
       while (elapsed >= STEP_MS && !run.crashed) {
         elapsed -= STEP_MS
+        const previousDistance = run.distance
         stepRunner(run)
+        if (crossedScoreMilestone(previousDistance, run.distance)) audioRef.current?.play('point')
         if (run.ticks % SAMPLE_TICKS !== 0) continue
 
         current.previous.set(current.sampled)
-        drawObservation(current.sampled, run.rise, run.obstacles)
+        drawObservation(current.sampled, run.rise, run.obstacles, run.distance)
         const prediction = predictJump(current.sampled, current.previous)
         const shouldJump = prediction.probability !== null && prediction.probability >= JUMP_THRESHOLD
         let decision: Action = prediction.probability === null ? 'Tracking' : 'Run'
@@ -74,6 +84,7 @@ export default function DinoRunner() {
         else if (shouldJump) {
           decision = 'Jump'
           if (modeRef.current === 'ai' && jump(run)) {
+            audioRef.current?.play('jump')
             current.jumps++
             setJumps(current.jumps)
           }
@@ -85,10 +96,11 @@ export default function DinoRunner() {
         paintObservation(previousRef.current, current.previous)
       }
 
-      drawObservation(current.pixels, run.rise, run.obstacles)
+      drawObservation(current.pixels, run.rise, run.obstacles, run.distance)
       paintGame(context, current.pixels, run.distance)
 
       if (run.crashed) {
+        audioRef.current?.play('die')
         const distance = Math.floor(run.distance)
         setScore(distance)
         setBest(value => Math.max(distance, value))
@@ -119,11 +131,20 @@ export default function DinoRunner() {
     }
   }
 
+  function configureAudio(enabled: boolean) {
+    // Starting a run or enabling SFX supplies the browser's audio gesture.
+    if (enabled && !audioRef.current && typeof AudioContext !== 'undefined') {
+      audioRef.current = createDinoAudio()
+    }
+    audioRef.current?.enable(enabled)
+  }
+
   function startOrPause() {
     if (phase === 'running') {
       setPhase('paused')
       return
     }
+    configureAudio(effectsEnabled)
     if (phase === 'crashed') resetRun('running')
     else setPhase('running')
     screenRef.current?.focus({ preventScroll: true })
@@ -141,6 +162,7 @@ export default function DinoRunner() {
   function jumpAsHuman() {
     const session = sessionRef.current
     if (phase !== 'running' || mode !== 'human' || !session || !jump(session.run)) return
+    audioRef.current?.play('jump')
     session.jumps++
     setJumps(session.jumps)
   }
@@ -204,6 +226,14 @@ export default function DinoRunner() {
             <div><dt>Best</dt><dd>{Math.max(best, score)}</dd></div>
             <div><dt>Jumps</dt><dd>{jumps}</dd></div>
           </dl>
+          <button type="button" className="utility-button dino-sfx" aria-label="Game sound effects"
+            aria-pressed={effectsEnabled} onClick={() => {
+              const enabled = !effectsEnabled
+              configureAudio(enabled)
+              setEffectsEnabled(enabled)
+            }}>
+            SFX {effectsEnabled ? 'ON' : 'OFF'}
+          </button>
         </div>
         <p id="dino-help" className="dino-help">
           {mode === 'human'
