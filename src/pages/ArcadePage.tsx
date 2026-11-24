@@ -24,7 +24,7 @@ export default function ArcadePage({ backgroundVideo, headingRef, onBack }: Arca
       <header className="arcade-header">
         <button type="button" className="utility-button" onClick={onBack}>← BACK TO MENU</button>
         <h1 ref={headingRef} tabIndex={-1}>ARCADE<span aria-hidden="true">★</span></h1>
-        <p>Play the arcade games or watch the AI take the controls in Dino Runner.</p>
+        <p>Play the arcade games or watch the AI take the controls.</p>
       </header>
       <div className="arcade-layout">
         <nav className="arcade-catalog" aria-label="Demos">

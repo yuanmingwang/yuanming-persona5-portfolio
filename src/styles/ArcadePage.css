@@ -125,12 +125,8 @@
   box-shadow: 6px 6px 0 #0f0b10;
 }
 
-.night-flight {
-  max-width: clamp(420px, calc((100svh - 155px) * 1.6667), 760px);
-}
-
-.night-flight canvas {
-  scroll-margin-block: 72px 100px;
+.flight-workspace .arcade-screen canvas {
+  scroll-margin-block: 70px 72px;
 }
 
 .arcade-game-header,
@@ -382,6 +378,11 @@
   height: auto;
   border: 1px solid #826773;
   image-rendering: pixelated;
+}
+
+.flight-frames canvas {
+  aspect-ratio: 1;
+  background: #191521;
 }
 
 .dino-frames figcaption {

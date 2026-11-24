@@ -11,7 +11,7 @@ A Persona 5–inspired portfolio for Yuanming Wang, built with **React, TypeScri
 - **Socials:** GitHub, LinkedIn, and email cards with Open and Copy actions.
 - **Journey:** study, work, and location chapters with school and city artwork.
 - **Questions:** a conversation-style introduction to the person behind the work.
-- **Arcade:** an expandable demo catalog featuring Dino Runner, with Human and AI controls and a live vision inspector.
+- **Arcade:** Dino Runner and Night Flight, both with Human and AI controls and a live vision inspector.
 
 The site uses red, black, and cream styling, character artwork, transparent video transitions, and responsive layouts. Text is editable through CSV files or published Google Sheets. It is a static website; no backend or Google account sign-in is required for visitors.
 
@@ -72,7 +72,7 @@ Fields containing commas or line breaks need CSV quoting; a spreadsheet's CSV ex
 
 A published Menu sheet can add or reorder the `arcade` row. Older sheets get the bundled Arcade entry at the end of the menu.
 
-Dino Runner loads when you open Arcade. Its logistic classifier uses two grayscale frames to estimate obstacle gap and closing speed. To regenerate the bundled weights from synthetic frame pairs, run `node scripts/train-dino.mjs`. Add future demos to the catalog in `src/pages/ArcadePage.tsx`.
+Dino Runner loads when you open Arcade. Its logistic classifier uses two grayscale frames to estimate obstacle gap and closing speed. To regenerate the bundled weights from synthetic frame pairs, run `node scripts/train-dino.mjs`. Night Flight runs a small CNN in the browser. It locates the bird and pipe gaps from grayscale frames, and a controller plans flaps from the resulting estimates. AI Vision shows live frames, estimates, and decision timing in both Human and AI mode. Add future demos to the catalog in `src/pages/ArcadePage.tsx`.
 
 Each CSV is separate: editing the résumé does not automatically update About, Journey, Questions, or the original Google Doc. Local edits appear during development; updating the deployed site requires a new deployment.
 
@@ -152,6 +152,42 @@ Leave the value blank to use the CSS backdrop. The homepage uses `Joker_animated
 ### Music
 
 Tracks are stored in `public/audio`. Their order and display names are defined by the `tracks` list in `src/components/SoundToggle.tsx`. Keep filenames and that list in sync when replacing songs.
+
+## Train the Night Flight CNN
+
+Use Node.js 24 and Python 3.13. The [Night Flight AI guide](docs/NIGHT_FLIGHT_AI.md) explains how training frames, CNN predictions, and the flight planner work together.
+
+### Install PyTorch
+
+Use the repository's shared `.venv` for Python model training. From the repository root on macOS, create it with Python 3.13 if needed, then activate it and install PyTorch.
+
+```sh
+python3.13 -m venv .venv
+source .venv/bin/activate
+python -m pip install "torch==2.12.1"
+python -m pip check
+```
+
+On Windows PowerShell, create the environment with `py -3.13 -m venv .venv` and activate it with `.\.venv\Scripts\Activate.ps1`. For an NVIDIA GPU, use the [PyTorch install selector](https://pytorch.org/get-started/locally/) to find the command for your CUDA build.
+
+### Generate frames and train
+
+```sh
+mkdir -p training-output/night-flight
+node --experimental-strip-types scripts/sample-night-flight.mjs training-output/night-flight/frames.bin --frames 8000 --seed 829761
+python scripts/train-night-flight.py training-output/night-flight/frames.bin training-output/night-flight/candidate.json --epochs 12 --device auto
+```
+
+Training files go in the Git-ignored `training-output/night-flight/` folder. The sampler generates 8,000 synthetic grayscale frames, about 56 MB. If `frames.bin` is already there, skip the sampler and reuse it. The trainer prints validation precision and recall and exports weights in the same JSON format as the game's `model.json`. The two scripts require new output paths so existing datasets and models are safe to reuse. Device selection tries CUDA, Apple MPS, then CPU. Use `--device cpu` to run explicitly on CPU.
+
+### Compare and use the trained weights
+
+```sh
+node --experimental-strip-types scripts/benchmark-night-flight.mjs --runs 15 --target 150
+node --experimental-strip-types scripts/benchmark-night-flight.mjs --runs 15 --target 150 --weights training-output/night-flight/candidate.json
+```
+
+Both commands play the same seeded courses. Compare how many runs reach the target and how early the remaining runs crash. To compare on fresh courses, add `--first-seed 101` to both commands. After you select a candidate, copy it to `src/demos/night-flight/model.json`, then run the tests and build. Python and training data are used locally. Visitors receive the bundled JSON weights and the TypeScript game.
 
 ## Bandwidth planning
 

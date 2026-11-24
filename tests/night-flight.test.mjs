@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict'
 import { test } from 'node:test'
+import { SAMPLE_TICKS } from '../src/demos/night-flight/frames.ts'
+import { createPilot } from '../src/demos/night-flight/pilot.ts'
 import { BIRD_X, createFlight, flap, PIPE_CAP_WIDTH, stepFlight } from '../src/demos/night-flight/flight.ts'
 
 test('a flap lifts the bird and gravity brings it back down', () => {
@@ -47,4 +49,26 @@ test('pipe caps collide beyond the shaft, but passing the gap is safe', () => {
   clearFlight.y = pipe.center
   stepFlight(clearFlight)
   assert.equal(clearFlight.crashed, false)
+})
+
+test('the CNN pilot clears 70 pipe pairs on three seeded courses', () => {
+  for (const seed of [1, 7, 13]) {
+    let state = seed
+    const random = () => {
+      state = (Math.imul(state, 1664525) + 1013904223) >>> 0
+      return state / 2 ** 32
+    }
+    const flight = createFlight()
+    const pilot = createPilot()
+
+    while (!flight.crashed && flight.score < 70 && flight.ticks < 4200) {
+      if (flight.ticks % SAMPLE_TICKS === 0 && pilot.sample(flight).flap) {
+        pilot.recordFlap(flight.ticks)
+        flap(flight)
+      }
+      stepFlight(flight, random)
+    }
+
+    assert.equal(flight.score, 70, `seed ${seed}`)
+  }
 })

@@ -1,5 +1,5 @@
-import { BIRD_X, GROUND, HEIGHT, PIPE_CAP_HEIGHT, PIPE_CAP_WIDTH, PIPE_INSET, WIDTH } from './flight'
-import type { Flight } from './flight'
+import { BIRD_X, GROUND, HEIGHT, PIPE_CAP_HEIGHT, PIPE_CAP_WIDTH, PIPE_INSET, WIDTH } from './flight.ts'
+import type { Flight } from './flight.ts'
 
 const bird = [
   '       ######   ',
@@ -24,12 +24,16 @@ const wingFrames = [0, 1, 2, 1]
 const buildingHeights = [23, 43, 31, 53, 37, 27, 61, 34]
 const ink = { '#': '#110e17', C: '#fff4df', R: '#ed2648' }
 
+type PaintRect = (color: string, x: number, y: number, width: number, height: number) => void
+
 export function paintFlight(context: CanvasRenderingContext2D, flight: Flight) {
-  function rect(color: string, x: number, y: number, width: number, height: number) {
+  drawFlight(flight, (color, x, y, width, height) => {
     context.fillStyle = color
     context.fillRect(x, y, width, height)
-  }
+  })
+}
 
+export function drawFlight(flight: Flight, rect: PaintRect) {
   function sprite(rows: readonly string[], x: number, y: number) {
     for (const [row, pixels] of rows.entries()) {
       for (let column = 0; column < pixels.length; column++) {

@@ -8,10 +8,11 @@ export const PIPE_INSET = 3
 export const TICKS_PER_SECOND = 60
 
 const PIPE_SPACING = 152
-const GRAVITY = .23
-const FLAP_SPEED = -4.1
-const BIRD_HALF_WIDTH = 10
-const BIRD_HALF_HEIGHT = 8
+export const GRAVITY = .23
+export const MAX_FALL_SPEED = 6
+export const FLAP_SPEED = -4.1
+export const BIRD_HALF_WIDTH = 10
+export const BIRD_HALF_HEIGHT = 8
 
 type Pipe = { x: number; center: number; gap: number; passed: boolean }
 
@@ -41,14 +42,22 @@ export function flap(flight: Flight) {
   flight.velocity = FLAP_SPEED
 }
 
+export function advanceBird(bird: { y: number; velocity: number }) {
+  bird.velocity = Math.min(bird.velocity + GRAVITY, MAX_FALL_SPEED)
+  bird.y += bird.velocity
+}
+
+export function scrollSpeed(score: number) {
+  return Math.min(3.2, 1.85 + score * .045)
+}
+
 export function stepFlight(flight: Flight, random = Math.random) {
   if (flight.crashed) return
 
-  const speed = Math.min(3.2, 1.85 + flight.score * .045)
+  const speed = scrollSpeed(flight.score)
   flight.ticks++
   flight.distance += speed
-  flight.velocity = Math.min(flight.velocity + GRAVITY, 6)
-  flight.y += flight.velocity
+  advanceBird(flight)
 
   const top = flight.y - BIRD_HALF_HEIGHT
   const bottom = flight.y + BIRD_HALF_HEIGHT
