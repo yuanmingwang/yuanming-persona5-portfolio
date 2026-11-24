@@ -1,7 +1,7 @@
 const soundNames = ['jump', 'die', 'point'] as const
 type SoundName = typeof soundNames[number]
 
-export function createDinoAudio() {
+export function createArcadeAudio() {
   const context = new AudioContext()
   const volume = context.createGain()
   volume.gain.value = .4

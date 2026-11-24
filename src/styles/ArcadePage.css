@@ -53,7 +53,7 @@
 }
 
 .arcade-catalog button,
-.dino-header-controls button {
+.arcade-header-controls button {
   --button-face: #211820;
   --button-shadow: #8f5270;
   position: relative;
@@ -65,8 +65,8 @@
 
 .arcade-catalog button::before,
 .arcade-catalog button::after,
-.dino-header-controls button::before,
-.dino-header-controls button::after {
+.arcade-header-controls button::before,
+.arcade-header-controls button::after {
   position: absolute;
   z-index: -1;
   inset: 0;
@@ -75,13 +75,13 @@
 }
 
 .arcade-catalog button::before,
-.dino-header-controls button::before {
+.arcade-header-controls button::before {
   background: var(--button-shadow);
   transform: translate(3px, 3px);
 }
 
 .arcade-catalog button::after,
-.dino-header-controls button::after {
+.arcade-header-controls button::after {
   background: var(--button-face);
 }
 
@@ -119,15 +119,23 @@
   gap: 22px;
 }
 
-.dino-game {
+.arcade-game {
   border: 1px solid #815466;
   background: #18141b;
   box-shadow: 6px 6px 0 #0f0b10;
 }
 
-.dino-game-header,
+.night-flight {
+  max-width: clamp(420px, calc((100svh - 155px) * 1.6667), 760px);
+}
+
+.night-flight canvas {
+  scroll-margin-block: 72px 100px;
+}
+
+.arcade-game-header,
 .dino-vision-title,
-.dino-game-footer {
+.arcade-game-footer {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -135,13 +143,13 @@
   padding: 13px 16px;
 }
 
-.dino-game-header {
+.arcade-game-header {
   flex-wrap: wrap;
   background: var(--arcade-paper);
   color: #18131a;
 }
 
-.dino-game h2,
+.arcade-game h2,
 .dino-vision h2 {
   margin: 0;
   font-family: Impact, 'Arial Black', sans-serif;
@@ -152,19 +160,19 @@
   text-transform: uppercase;
 }
 
-.dino-header-controls {
+.arcade-header-controls {
   display: flex;
   flex-wrap: wrap;
   gap: 8px 14px;
 }
 
 .dino-mode,
-.dino-controls {
+.arcade-controls {
   display: flex;
   gap: 6px;
 }
 
-.dino-header-controls button {
+.arcade-header-controls button {
   min-height: 44px;
   padding: 7px 14px;
   font: italic 900 14px/1 Impact, 'Arial Black', sans-serif;
@@ -211,37 +219,37 @@
   display: block;
 }
 
-.dino-controls .dino-primary {
+.arcade-controls .arcade-primary {
   --button-face: #b81035;
   --button-shadow: #1a141a;
 }
 
-.dino-controls button:hover:not(:disabled) {
+.arcade-controls button:hover:not(:disabled) {
   --button-face: #171218;
   --button-shadow: var(--arcade-red);
 }
 
-.dino-controls .dino-primary:hover {
+.arcade-controls .arcade-primary:hover {
   --button-face: #a20d2d;
   --button-shadow: #1a141a;
 }
 
-.dino-header-controls button:focus-visible {
+.arcade-header-controls button:focus-visible {
   outline-color: #8a1230;
   outline-offset: 3px;
 }
 
-.dino-header-controls button:disabled {
+.arcade-header-controls button:disabled {
   opacity: .52;
   cursor: default;
 }
 
-.dino-screen {
+.arcade-screen {
   position: relative;
   background: #111018;
 }
 
-.dino-screen canvas {
+.arcade-screen canvas {
   display: block;
   width: 100%;
   height: auto;
@@ -249,17 +257,17 @@
   touch-action: manipulation;
 }
 
-.dino-screen canvas:focus {
+.arcade-screen canvas:focus {
   outline: none;
 }
 
 /* Keep keyboard focus visible on the instructions beside the playing field. */
-.dino-screen:has(canvas:focus-visible) ~ .dino-help {
+.arcade-screen:has(canvas:focus-visible) ~ .arcade-help {
   color: var(--arcade-paper);
   box-shadow: inset 3px 0 var(--arcade-red);
 }
 
-.dino-screen-status {
+.arcade-screen-status {
   position: absolute;
   top: 44%;
   left: 50%;
@@ -277,23 +285,23 @@
   pointer-events: none;
 }
 
-.dino-game-footer {
+.arcade-game-footer {
   flex-wrap: wrap;
   border-top: 1px solid #603445;
 }
 
-.dino-sfx[aria-pressed="true"] {
+.arcade-sfx[aria-pressed="true"] {
   border-color: #ff607a;
   box-shadow: 2px 2px 0 var(--arcade-red);
 }
 
-.dino-score {
+.arcade-score {
   display: flex;
   gap: clamp(15px, 2.2vw, 32px);
   margin: 0;
 }
 
-.dino-score dt {
+.arcade-score dt {
   color: var(--arcade-muted);
   font-size: 10px;
   font-weight: 800;
@@ -301,12 +309,12 @@
   text-transform: uppercase;
 }
 
-.dino-score dd {
+.arcade-score dd {
   margin: 2px 0 0;
   font: 800 19px/1.2 ui-monospace, monospace;
 }
 
-.dino-help {
+.arcade-help {
   margin: 0;
   padding: 0 16px 12px;
   color: var(--arcade-muted);
@@ -460,8 +468,8 @@
 }
 
 @media (max-width: 420px) {
-  .dino-game-header,
-  .dino-game-footer {
+  .arcade-game-header,
+  .arcade-game-footer {
     padding-inline: 10px;
   }
 
@@ -470,7 +478,7 @@
   }
 
   .dino-mode button,
-  .dino-controls button {
+  .arcade-controls button {
     padding-inline: 9px;
   }
 }

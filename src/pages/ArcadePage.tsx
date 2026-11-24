@@ -5,6 +5,7 @@ import '../styles/ArcadePage.css'
 
 const demos = [
   { id: 'dino', title: 'Dino Runner', description: 'Endless runner', Game: lazy(() => import('../demos/dino/DinoRunner')) },
+  { id: 'night-flight', title: 'Night Flight', description: 'Flap through the pipes', Game: lazy(() => import('../demos/night-flight/NightFlight')) },
 ]
 
 type ArcadePageProps = {
@@ -23,7 +24,7 @@ export default function ArcadePage({ backgroundVideo, headingRef, onBack }: Arca
       <header className="arcade-header">
         <button type="button" className="utility-button" onClick={onBack}>← BACK TO MENU</button>
         <h1 ref={headingRef} tabIndex={-1}>ARCADE<span aria-hidden="true">★</span></h1>
-        <p>Play the demos yourself or watch the AI take the controls.</p>
+        <p>Play the arcade games or watch the AI take the controls in Dino Runner.</p>
       </header>
       <div className="arcade-layout">
         <nav className="arcade-catalog" aria-label="Demos">

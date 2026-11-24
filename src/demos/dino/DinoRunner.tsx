@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { createDinoAudio } from './audio'
+import { createArcadeAudio } from '../audio'
 import {
   createRunner, crossedScoreMilestone, drawObservation, FRAME_HEIGHT, FRAME_WIDTH, jump,
   SAMPLE_TICKS, stepRunner, TICKS_PER_SECOND,
@@ -25,7 +25,7 @@ function createSession() {
 export default function DinoRunner() {
   const sessionRef = useRef<ReturnType<typeof createSession> | null>(null)
   const modeRef = useRef<Mode>('human')
-  const audioRef = useRef<ReturnType<typeof createDinoAudio> | null>(null)
+  const audioRef = useRef<ReturnType<typeof createArcadeAudio> | null>(null)
   const screenRef = useRef<HTMLCanvasElement>(null)
   const inputRef = useRef<HTMLCanvasElement>(null)
   const previousRef = useRef<HTMLCanvasElement>(null)
@@ -134,7 +134,7 @@ export default function DinoRunner() {
   function configureAudio(enabled: boolean) {
     // Starting a run or enabling SFX supplies the browser's audio gesture.
     if (enabled && !audioRef.current && typeof AudioContext !== 'undefined') {
-      audioRef.current = createDinoAudio()
+      audioRef.current = createArcadeAudio()
     }
     audioRef.current?.enable(enabled)
   }
@@ -171,10 +171,10 @@ export default function DinoRunner() {
 
   return (
     <div className="dino-workspace">
-      <section className="dino-game" aria-labelledby="dino-game-title">
-        <div className="dino-game-header">
+      <section className="arcade-game" aria-labelledby="dino-game-title">
+        <div className="arcade-game-header">
           <h2 id="dino-game-title">Dino Runner</h2>
-          <div className="dino-header-controls">
+          <div className="arcade-header-controls">
             <div className="dino-mode" role="group" aria-label="Who controls the runner">
               <button type="button" aria-pressed={mode === 'human'} onClick={() => selectMode('human')}>
                 <span className="dino-mode-star" aria-hidden="true">★</span>Human
@@ -183,8 +183,8 @@ export default function DinoRunner() {
                 <span className="dino-mode-star" aria-hidden="true">★</span>AI
               </button>
             </div>
-            <div className="dino-controls">
-              <button type="button" className="dino-primary" onClick={startOrPause}>{playLabel[phase]}</button>
+            <div className="arcade-controls">
+              <button type="button" className="arcade-primary" onClick={startOrPause}>{playLabel[phase]}</button>
               <button type="button" disabled={phase === 'ready'} onClick={() => {
                 setBest(value => Math.max(value, score))
                 resetRun()
@@ -194,7 +194,7 @@ export default function DinoRunner() {
           </div>
         </div>
 
-        <div className="dino-screen">
+        <div className="arcade-screen">
           <canvas
             ref={screenRef}
             width={768}
@@ -216,17 +216,17 @@ export default function DinoRunner() {
             }}
           />
           {phase !== 'running' && (
-            <div className="dino-screen-status" aria-hidden="true">{phaseLabel[phase]}</div>
+            <div className="arcade-screen-status" aria-hidden="true">{phaseLabel[phase]}</div>
           )}
         </div>
 
-        <div className="dino-game-footer">
-          <dl className="dino-score">
+        <div className="arcade-game-footer">
+          <dl className="arcade-score">
             <div><dt>Score</dt><dd>{score}</dd></div>
             <div><dt>Best</dt><dd>{Math.max(best, score)}</dd></div>
             <div><dt>Jumps</dt><dd>{jumps}</dd></div>
           </dl>
-          <button type="button" className="utility-button dino-sfx" aria-label="Game sound effects"
+          <button type="button" className="utility-button arcade-sfx" aria-label="Game sound effects"
             aria-pressed={effectsEnabled} onClick={() => {
               const enabled = !effectsEnabled
               configureAudio(enabled)
@@ -235,7 +235,7 @@ export default function DinoRunner() {
             SFX {effectsEnabled ? 'ON' : 'OFF'}
           </button>
         </div>
-        <p id="dino-help" className="dino-help">
+        <p id="dino-help" className="arcade-help">
           {mode === 'human'
             ? 'Press Space or ↑ to jump. You can also tap the game screen. Press Esc to pause.'
             : 'The AI jumps automatically. Switch to Human at any time to take over.'}
