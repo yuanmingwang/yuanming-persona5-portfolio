@@ -380,6 +380,43 @@
   image-rendering: pixelated;
 }
 
+.dino-frames.flight-frames {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+  max-width: 390px;
+}
+
+.flight-frames figure {
+  grid-column: span 2;
+}
+
+.flight-frames .flight-primary-frame {
+  grid-column: span 3;
+}
+
+.flight-class-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 9px;
+  grid-column: 1 / -1;
+  margin: 0;
+  padding: 0;
+  color: var(--arcade-muted);
+  font-size: 10px;
+  list-style: none;
+}
+
+.flight-class-legend li {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.flight-class-legend li span {
+  width: 9px;
+  height: 9px;
+  border: 1px solid #826773;
+}
+
 .flight-frames canvas {
   aspect-ratio: 1;
   background: #191521;

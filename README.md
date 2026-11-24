@@ -72,7 +72,7 @@ Fields containing commas or line breaks need CSV quoting; a spreadsheet's CSV ex
 
 A published Menu sheet can add or reorder the `arcade` row. Older sheets get the bundled Arcade entry at the end of the menu.
 
-Dino Runner loads when you open Arcade. Its logistic classifier uses two grayscale frames to estimate obstacle gap and closing speed. To regenerate the bundled weights from synthetic frame pairs, run `node scripts/train-dino.mjs`. Night Flight runs a small CNN in the browser. It locates the bird and pipe gaps from grayscale frames, and a controller plans flaps from the resulting estimates. AI Vision shows live frames, estimates, and decision timing in both Human and AI mode. Add future demos to the catalog in `src/pages/ArcadePage.tsx`.
+Dino Runner loads when you open Arcade. Its logistic classifier uses two grayscale frames to estimate obstacle gap and closing speed. To regenerate the bundled weights from synthetic frame pairs, run `node scripts/train-dino.mjs`. Night Flight runs a small CNN in the browser. It locates the bird and pipe gaps from grayscale frames, and a controller plans flaps from the resulting estimates. AI Vision shows live frames, a color-coded CNN output, position estimates, and decision timing in both Human and AI mode. Add future demos to the catalog in `src/pages/ArcadePage.tsx`.
 
 Each CSV is separate: editing the résumé does not automatically update About, Journey, Questions, or the original Google Doc. Local edits appear during development; updating the deployed site requires a new deployment.
 

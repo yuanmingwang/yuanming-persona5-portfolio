@@ -15,7 +15,8 @@ export function createPilot(weights?: VisionWeights) {
     sample(flight: Flight) {
       const start = performance.now()
       const frame = captureFrame(flight)
-      observations.unshift({ frame, reading: readFrame(frame, weights) })
+      const reading = readFrame(frame, weights)
+      observations.unshift({ frame, reading })
       if (observations.length > FRAME_COUNT) observations.pop()
 
       const decision = decideFlight(
@@ -25,6 +26,7 @@ export function createPilot(weights?: VisionWeights) {
       )
       return {
         ...decision,
+        classMap: reading.classMap,
         frames: observations.map(observation => observation.frame),
         duration: performance.now() - start,
       }

@@ -12,7 +12,9 @@ const Y_SCALE = HEIGHT / FRAME_SIZE
 export type PipeReading = { x: number; center: number; gap: number }
 export type VisionWeights = typeof model
 
-type Reading = { birdY: number | null; pipes: PipeReading[] }
+export const PixelClass = { Background: 0, Bird: 1, PipeCap: 2 } as const
+
+type Reading = { birdY: number | null; pipes: PipeReading[]; classMap: Uint8Array }
 
 export function readFrame(frame: Uint8Array, weights: VisionWeights = model): Reading {
   const stride = FRAME_SIZE + 2
@@ -27,6 +29,8 @@ export function readFrame(frame: Uint8Array, weights: VisionWeights = model): Re
   let birdBottom = -1
   const capTops = new Int16Array(FRAME_SIZE).fill(FRAME_SIZE)
   const capBottoms = new Int16Array(FRAME_SIZE).fill(-1)
+  // Zero also represents background for pixels skipped by the brightness filter.
+  const classMap = new Uint8Array(frame.length)
   const logits = new Float32Array(3)
   for (let y = 0; y < FRAME_SIZE; y++) {
     for (let x = 0; x < FRAME_SIZE; x++) {
@@ -47,10 +51,13 @@ export function readFrame(frame: Uint8Array, weights: VisionWeights = model): Re
           logits[category] += weights.head[category][filter] * activation
         }
       }
-      if (logits[1] > logits[0] && logits[1] > logits[2]) {
+      const [background, bird, pipeCap] = logits
+      if (bird > background && bird > pipeCap) {
+        classMap[y * FRAME_SIZE + x] = PixelClass.Bird
         birdTop = Math.min(birdTop, y)
         birdBottom = Math.max(birdBottom, y)
-      } else if (logits[2] > logits[0]) {
+      } else if (pipeCap > background) {
+        classMap[y * FRAME_SIZE + x] = PixelClass.PipeCap
         capTops[x] = Math.min(capTops[x], y)
         capBottoms[x] = Math.max(capBottoms[x], y)
       }
@@ -66,7 +73,7 @@ export function readFrame(frame: Uint8Array, weights: VisionWeights = model): Re
     const gap = (capBottoms[first] - capTops[first]) * Y_SCALE - PIPE_CAP_HEIGHT
     pipes.push({ x: (first + x + 1) * X_SCALE / 2 - 7, center, gap })
   }
-  return { birdY: birdBottom < 0 ? null : (birdTop + birdBottom + 1) * Y_SCALE / 2 + 1, pipes }
+  return { birdY: birdBottom < 0 ? null : (birdTop + birdBottom + 1) * Y_SCALE / 2 + 1, pipes, classMap }
 }
 
 export function decideFlight(history: readonly Reading[], ticksSinceFlap: number | null, speed: number) {
