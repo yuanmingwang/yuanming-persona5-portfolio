@@ -3,6 +3,7 @@ import { useMemo, useRef, useState } from 'react'
 import type { Ref } from 'react'
 import PageBackground from '../components/PageBackground'
 import images from '../content/about-images.json'
+import { projectPapers } from '../content/resumePapers'
 import { pickImage } from '../lib/about'
 import { assignResumeFooterImages, filterResume, resumeCategories } from '../lib/resume'
 import type { ResumeCategory, ResumeEntry } from '../lib/resume'
@@ -21,14 +22,18 @@ export default function ResumePage({ entries, backgroundVideo, headingRef, onBac
   const [category, setCategory] = useState<ResumeCategory>(categories[0].id)
   const [selectedId, setSelectedId] = useState('')
   const [query, setQuery] = useState('')
+  const [paperView, setPaperView] = useState<'closed' | 'preview' | 'links'>('closed')
   const detailRef = useRef<HTMLHeadingElement>(null)
   const listRef = useRef<HTMLElement>(null)
+  const paperDialogRef = useRef<HTMLDialogElement>(null)
   const profile = entries.find(entry => entry.section === 'profile')!
   // A fresh draw on each page mount; category/search changes keep this portrait.
   const [characterImage] = useState(() => pickImage(images.character, profile.image))
   const [footerImages] = useState(() => assignResumeFooterImages(entries, images.confidant))
   const visible = useMemo(() => filterResume(entries, category, query), [entries, category, query])
   const selected = visible.find(entry => entry.id === selectedId) ?? visible[0]
+  const paper = selected?.section === 'projects' ? projectPapers.get(selected.id) : undefined
+  const paperUrl = paper && `${import.meta.env.BASE_URL}${paper.path}`
   const categoryLabel = resumeCategories.find(item => item.id === category)!.label
   const count = (section: ResumeCategory) => entries.filter(entry => entry.section === section).length
 
@@ -49,12 +54,21 @@ export default function ResumePage({ entries, backgroundVideo, headingRef, onBac
     }
   }
 
+  function openPaper(trigger: HTMLButtonElement) {
+    const dialog = paperDialogRef.current
+    if (!dialog || dialog.open) return
+    const canPreview = navigator.pdfViewerEnabled && !window.matchMedia('(hover: none) and (pointer: coarse)').matches
+    trigger.focus({ preventScroll: true })
+    dialog.showModal()
+    setPaperView(canPreview ? 'preview' : 'links')
+  }
+
   useMenuKeyboard({
     menuRef: listRef,
     selector: '.resume-record',
     activeIndex: Math.max(0, visible.findIndex(entry => entry.id === selected?.id)),
     onMove: index => setSelectedId(visible[index].id),
-    disabled: navigationDisabled,
+    disabled: navigationDisabled || paperView !== 'closed',
   })
 
   return (
@@ -118,6 +132,12 @@ export default function ResumePage({ entries, backgroundVideo, headingRef, onBac
                 {selected.subtitle && <p className="resume-detail-subtitle">{selected.subtitle}</p>}
                 <h2 id="resume-detail-title" ref={detailRef} tabIndex={-1}>{selected.title}</h2>
                 {(selected.period || selected.location) && <p className="resume-dates">{selected.period && <span>{selected.period}</span>}{selected.location && <span>{selected.location}</span>}</p>}
+                {paper && (
+                  <div className="resume-paper-action">
+                    <button type="button" className="utility-button resume-paper-read" aria-haspopup="dialog" onClick={event => openPaper(event.currentTarget)}>READ PAPER</button>
+                    <span>PDF · {paper.pages} PAGES</span>
+                  </div>
+                )}
                 {selected.summary && <p className="resume-entry-summary">{selected.summary}</p>}
                 {!!selected.bullets.length && <ul className="resume-bullets">{selected.bullets.map((bullet, index) => <li key={index}>{bullet}</li>)}</ul>}
                 {selected.highlight && <aside className="resume-result"><span>RESULT / IN CONTEXT</span><p>{selected.highlight}</p></aside>}
@@ -134,6 +154,27 @@ export default function ResumePage({ entries, backgroundVideo, headingRef, onBac
           ) : <div className="resume-no-detail"><span aria-hidden="true">★</span><p>Try another search to uncover a file.</p></div>}
         </section>
       </div>
+      {paper && paperUrl && selected && (
+        <dialog
+          ref={paperDialogRef}
+          className={`resume-paper-dialog${paperView === 'preview' ? ' has-preview' : ''}`}
+          aria-labelledby="resume-paper-title"
+          onClose={() => setPaperView('closed')}
+        >
+          <header className="resume-paper-header">
+            <div>
+              <p>PROJECT PAPER · PDF · {paper.pages} PAGES</p>
+              <h2 id="resume-paper-title">{selected.title}</h2>
+            </div>
+            <button type="button" className="utility-button" onClick={() => paperDialogRef.current?.close()}>CLOSE ×</button>
+          </header>
+          <div className="resume-paper-links">
+            <a className="utility-button" href={paperUrl} target="_blank" rel="noopener noreferrer">OPEN PDF ↗</a>
+            <a className="utility-button" href={paperUrl} download={`${selected.title}.pdf`}>DOWNLOAD PDF ↓</a>
+          </div>
+          {paperView === 'preview' && <iframe className="resume-paper-preview" src={paperUrl} title={`PDF preview of ${selected.title}`} />}
+        </dialog>
+      )}
     </main>
   )
 }

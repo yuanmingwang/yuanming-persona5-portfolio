@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { existsSync, readFileSync, readdirSync } from 'node:fs'
 import { fileURLToPath } from 'node:url'
 import Papa from 'papaparse'
+import { projectPapers } from '../src/content/resumePapers.ts'
 
 const root = fileURLToPath(new URL('../', import.meta.url))
 const publicPath = path => `${root}public/${path}`
@@ -65,4 +66,15 @@ test('hard-coded homepage, stinger, playlist, and invitation assets exist', () =
   for (const [, folder, filename] of read('src/pages/SocialsPage.tsx').matchAll(/assetUrl\('([^']+)', '([^']+)'\)/g)) {
     assertFile(`image/${folder}/${filename}`)
   }
+})
+
+test('résumé papers resolve from project IDs to public PDFs', () => {
+  const ids = new Set(rows('Resume').filter(row => row.section === 'projects').map(row => row.id))
+  const filenames = []
+  for (const [id, paper] of projectPapers) {
+    assert.ok(ids.has(id), `No résumé project matches ${id}`)
+    assertFile(paper.path)
+    filenames.push(paper.path.split('/').at(-1))
+  }
+  assert.deepEqual(readdirSync(publicPath('documents/project-papers')).filter(name => name.endsWith('.pdf')).sort(), filenames.sort())
 })

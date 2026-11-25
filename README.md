@@ -76,6 +76,8 @@ Dino Runner loads when you open Arcade. Its logistic classifier uses two graysca
 
 Each CSV is separate: editing the résumé does not automatically update About, Journey, Questions, or the original Google Doc. Local edits appear during development; updating the deployed site requires a new deployment.
 
+To attach a PDF to a résumé project, save it in `public/documents/project-papers/` using the project's CSV ID with hyphens replaced by underscores. Add the original ID and the PDF page count to `src/content/resumePapers.ts`. The site uses the same IDs for local and published résumé entries.
+
 For every column and its meaning, see the [CSV reference](docs/ARCHITECTURE.md#csv-schemas).
 
 ### Option 2: use Google Sheets
