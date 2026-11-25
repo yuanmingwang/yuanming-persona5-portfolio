@@ -1,6 +1,6 @@
 # Yuanming’s Persona
 
-A Persona 5–inspired portfolio for Yuanming Wang, built with **React, TypeScript, and Vite**. Explore personal files, a searchable résumé, social links, a career timeline, and questions through an animated menu with video backgrounds and optional music.
+A Persona 5–inspired portfolio made by Yuanming Wang, built with **React, TypeScript, and Vite**. Explore personal files, a searchable résumé, social links, a career timeline, and questions through an animated menu with video backgrounds and optional music.
 
 **[Visit the portfolio](https://yuanmingwang.github.io/yuanming-persona5-portfolio/)**
 
@@ -191,7 +191,7 @@ Both commands play the same seeded courses. Compare how many runs reach the targ
 
 ## Bandwidth planning
 
-With the current WebM backgrounds, allow approximately **20 MB per visit** for planning. The modeled average is **15.3 MB**, not a measured visitor average.
+With the current WebM backgrounds, allow approximately **20 MB per visit** for planning. The modeled average is **15.3 MB**.
 
 | Visit | Estimated transfer |
 | --- | ---: |
@@ -211,8 +211,6 @@ At the 20 MB budget, 1,000 visits are about **20 GB** of transfer. These use dec
 Monthly transfer (GB) = visits × MB per visit ÷ 1,000
 Bandwidth cost = max(0, transfer − included GB) × rate per GB
 ```
-
-This is not a GitHub Pages bill or paid overage offer. Check [GitHub's current Pages limits](https://docs.github.com/en/pages/getting-started-with-github-pages/github-pages-limits) when planning traffic. For better estimates, measure transferred bytes in the deployed site's browser Network panel and compare with the host's usage reports. Recalculate after changing media or visitor assumptions.
 
 ## Hosting
 
