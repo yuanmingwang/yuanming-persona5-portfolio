@@ -258,7 +258,7 @@
 }
 
 /* Keep keyboard focus visible on the instructions beside the playing field. */
-.arcade-screen:has(canvas:focus-visible) ~ .arcade-help {
+.arcade-screen:has(canvas:focus-visible)~.arcade-help {
   color: var(--arcade-paper);
   box-shadow: inset 3px 0 var(--arcade-red);
 }
@@ -506,6 +506,7 @@
 }
 
 @media (max-width: 420px) {
+
   .arcade-game-header,
   .arcade-game-footer {
     padding-inline: 10px;
