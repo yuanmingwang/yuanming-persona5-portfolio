@@ -78,6 +78,8 @@ Phantom Escape opens in Tactical A* mode. Select Start Run to watch it collect c
 
 The first three levels alternate open arenas and room dungeons. Hybrid dungeons join the seeded rotation at level 4, and labyrinths join at level 7.
 
+See the [Phantom Escape AI guide](docs/PHANTOM_ESCAPE_AI.md) for map generation, enemy behavior, and how Tactical A*, State PPO, and Spatial Vision make decisions.
+
 For Phantom Escape training preparation, reuse the root Python environment and
 keep Node.js 24 on the path. Run these from the repository root:
 

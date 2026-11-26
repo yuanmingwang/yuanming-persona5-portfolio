@@ -51,6 +51,8 @@ public image folders → manifest generator → filename catalog → per-visit s
 
 ### Phantom Escape simulation
 
+The [Phantom Escape AI guide](PHANTOM_ESCAPE_AI.md) explains the game rules, map generation, enemies, and all three arcade AI modes.
+
 `map.ts` selects and generates a connected 40×24 layout from the run seed and level.
 Early levels alternate open arenas and room dungeons. The map pool adds hybrids at
 level 4 and labyrinths at level 7. Every generator uses the same placement rules.
