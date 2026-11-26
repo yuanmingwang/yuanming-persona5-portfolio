@@ -4,7 +4,7 @@ import { test } from 'node:test'
 import { createRun, stepRun } from '../src/demos/phantom-escape/engine.ts'
 import { createLearnedController, readLearnedActor } from '../src/demos/phantom-escape/learned.ts'
 import { TICKS_PER_ACTION } from '../src/demos/phantom-escape/observations.ts'
-import { createVisionRecovery } from '../src/demos/phantom-escape/vision-recovery.ts'
+import { createNavigationRecovery } from '../src/demos/phantom-escape/navigation-recovery.ts'
 import { observeSceneMoves, readVisionScene } from '../src/demos/phantom-escape/vision-spatial.ts'
 import { createVisionPainter } from '../src/demos/phantom-escape/vision.ts'
 
@@ -23,6 +23,21 @@ test('the deployed State PPO actor follows the seeded reference action trace', (
     }
   }
   assert.equal(controller.frame, undefined)
+})
+
+test('State PPO uses recovery to clear the level 3 corridor on seed 2877731996', () => {
+  const run = createRun(2877731996)
+  const controller = createLearnedController('state', actor)
+  let recoveredUpward = false
+  while (!run.ended && run.level <= 3) {
+    const movement = controller.movement(run)
+    if (run.level === 3 && run.board.coins.size === 11 && movement.y < 0) {
+      recoveredUpward ||= controller.decision.recovering
+    }
+    stepRun(run, movement)
+  }
+  assert.equal(recoveredUpward, true)
+  assert.equal(run.level, 4)
 })
 
 test('Spatial Vision samples RGB and holds each action between decisions', () => {
@@ -72,9 +87,10 @@ test('Spatial Vision avoids moving phantoms and clears level 3 on seed 179424748
   assert.equal(run.level, 4)
 })
 
-test('vision recovery drops its history when it sees a new level', () => {
-  const scene = readVisionScene(createVisionPainter()(createRun(5301).board))
-  const recovery = createVisionRecovery()
+test('navigation recovery drops its history when it sees a new level', () => {
+  const vision = readVisionScene(createVisionPainter()(createRun(5301).board))
+  const scene = { ...vision, threats: vision.enemyPixels }
+  const recovery = createNavigationRecovery()
   const moves = observeSceneMoves(scene, false)
   const hud = [1, .5, .3, 0, 0]
   for (let sample = 0; sample < 25; sample++) assert.equal(recovery(scene, moves, hud, 0), 0)

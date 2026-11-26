@@ -4,7 +4,7 @@ import { createMoveObservation, MOVE_FIELDS } from './forecast.ts'
 import { levelRules } from './map.ts'
 import { ACTIONS, observeHud, TICKS_PER_ACTION } from './observations.ts'
 import { observeSceneMoves, readVisionScene } from './vision-spatial.ts'
-import { createVisionRecovery } from './vision-recovery.ts'
+import { createNavigationRecovery } from './navigation-recovery.ts'
 import { createVisionPainter } from './vision.ts'
 
 export type LearnedMode = 'state' | 'vision'
@@ -73,7 +73,7 @@ export function readLearnedActor(asset: { version: number; float32: string }) {
 export function createLearnedController(mode: LearnedMode, actor: ReturnType<typeof readLearnedActor>) {
   const observeState = createMoveObservation()
   const paintVision = createVisionPainter()
-  const recover = createVisionRecovery()
+  const recover = createNavigationRecovery()
   let untilNext = 0
   let action = 0
   let frame: Uint8Array | undefined
@@ -97,7 +97,10 @@ export function createLearnedController(mode: LearnedMode, actor: ReturnType<typ
         previousLevel = run.level
         const logits = actor([...moves, ...hud])
         const preferred = logits.reduce((best, score, candidate) => score > logits[best] ? candidate : best, 0)
-        const planned = scene ? recover(scene, moves, hud, preferred) : preferred
+        const { maze, player, coins, enemies } = run.board
+        const navigation = scene ? { ...scene, threats: scene.enemyPixels }
+          : { floor: maze.floor, exit: maze.exit, player, coins, threats: enemies }
+        const planned = recover(navigation, moves, hud, preferred)
         action = avoidCollision(planned, clearance, logits)
         const duration = performance.now() - started
         const weights = logits.map(logit => Math.exp(logit - logits[preferred]))

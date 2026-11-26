@@ -66,7 +66,7 @@ export default function PhantomVision({ mode, intent, learnedDecision, planStats
           <dd>{mode === 'human' ? 'Human' : mode === 'ai' ? intent || 'Waiting' : action}</dd>
         </div>
         {mode === 'vision' && <div><dt>Input size</dt><dd>{VISION_WIDTH} × {VISION_HEIGHT} RGB</dd></div>}
-        {mode === 'vision' && <div><dt>Steering</dt><dd>{steering}</dd></div>}
+        {learned && <div><dt>Steering</dt><dd>{steering}</dd></div>}
         {mode === 'state' && <div><dt>Input</dt><dd>Simulator state</dd></div>}
         {learned && <div><dt>Decision time</dt><dd>{learnedDecision ? `${learnedDecision.duration.toFixed(2)} ms` : '—'}</dd></div>}
         {mode === 'ai' && <>

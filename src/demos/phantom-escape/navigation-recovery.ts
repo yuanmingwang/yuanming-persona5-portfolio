@@ -3,14 +3,20 @@ import { cellAt, centerOf, TILE, tileDistance } from './map.ts'
 import { MOVE_FIELDS } from './forecast.ts'
 import { ACTIONS, TICKS_PER_ACTION } from './observations.ts'
 import { findRoute } from './path.ts'
-import type { readVisionScene } from './vision-spatial.ts'
 
-type Scene = ReturnType<typeof readVisionScene>
+type Point = ReturnType<typeof centerOf>
+type Scene = {
+  floor: Uint8Array
+  player: Point
+  coins: Iterable<number>
+  exit?: number
+  threats: readonly Point[]
+}
 const STALL_SAMPLES = 26
 const RECOVERY_SAMPLES = 24
 const MOVE_PIXELS = PLAYER_STEP * TICKS_PER_ACTION
 
-export function createVisionRecovery() {
+export function createNavigationRecovery() {
   let recent: number[] = []
   let lastCollected: number | undefined
   let lastLevel: number | undefined
@@ -22,7 +28,7 @@ export function createVisionRecovery() {
   let previousAction: number | undefined
 
   return (scene: Scene, moves: readonly number[], hud: readonly number[], preferred: number) => {
-    const { floor, player, coins, enemyPixels } = scene
+    const { floor, player, coins, threats } = scene
     const cell = cellAt(player.x, player.y)
     const [, level, , collected, unlocked] = hud
     const newLevel = level !== lastLevel
@@ -50,7 +56,7 @@ export function createVisionRecovery() {
         failures[previousAction] = 0
       }
     }
-    previous = player
+    previous = { ...player }
     previousAction = undefined
     recent.push(cell)
     if (recent.length > STALL_SAMPLES) recent.shift()
@@ -75,7 +81,7 @@ export function createVisionRecovery() {
         if (!walkable) continue
         const point = centerOf(tile)
         let distance = Infinity
-        for (const enemy of enemyPixels) distance = Math.min(distance, Math.hypot(point.x - enemy.x, point.y - enemy.y))
+        for (const enemy of threats) distance = Math.min(distance, Math.hypot(point.x - enemy.x, point.y - enemy.y))
         risk[tile] += Math.max(0, 48 - distance) / TILE
       }
       const explored = new Set<number>()
