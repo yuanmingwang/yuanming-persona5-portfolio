@@ -15,7 +15,7 @@ import torch
 
 from .env import PhantomEscapeEnv, TrainingMaps
 from .evaluation import EVAL_SEED_COUNT, MAX_EPISODE_STEPS, checkpoint_features, evaluate
-from .policy import NavigationFeatures, StateFeatures, VisionFeatures
+from .policy import NavigationFeatures, SpatialVisionFeatures, StateFeatures, VisionFeatures
 from .selection import SelectCheckpoint
 
 ROLLOUT_STEPS = 256
@@ -36,13 +36,16 @@ def main():
     parser.add_argument("--learning-rate", type=float, help="override the PPO learning rate")
     parser.add_argument("--select-every", type=int, default=0, help="enable checkpoint selection at this step interval")
     parser.add_argument("--validation-episodes", type=int, default=40, help="even number of validation seeds")
-    parser.add_argument("--features", choices=("grid", "navigation", "vision"), help="observation profile for a fresh policy")
+    parser.add_argument("--features", choices=("grid", "navigation", "vision", "vision-spatial"),
+                        help="observation profile for a fresh policy")
     parser.add_argument("--imitation-episodes", type=int, default=0, help="attempt this many teacher demonstrations")
     parser.add_argument("--imitation-epochs", type=int, default=12)
     parser.add_argument("--output", type=Path, help="new directory for model and logs")
     model_source = parser.add_mutually_exclusive_group()
     model_source.add_argument("--resume", type=Path, help="resume from your own trusted PPO checkpoint")
     model_source.add_argument("--evaluate", type=Path, help="evaluate your own trusted checkpoint without training")
+    model_source.add_argument("--initialize-navigation", type=Path,
+                              help="initialize a spatial-vision policy from your own navigation checkpoint")
     parser.add_argument("--eval-episodes", type=int, default=20, help="0 to skip evaluation after training")
     args = parser.parse_args()
     if args.steps < 0 or args.envs < 1 or not 0 <= args.seed <= 2**32 - args.envs:
@@ -59,7 +62,9 @@ def main():
         parser.error("imitation requires a new model")
     if args.features and (args.resume or args.evaluate):
         parser.error("the checkpoint determines the observation profile")
-    if not (args.steps or args.imitation_episodes or args.evaluate):
+    if args.initialize_navigation and args.features != "vision-spatial":
+        parser.error("--initialize-navigation requires --features vision-spatial")
+    if not (args.steps or args.imitation_episodes or args.evaluate or args.initialize_navigation):
         parser.error("specify PPO steps, imitation episodes, or a checkpoint to evaluate")
     if not (int(bool(args.evaluate)) <= args.eval_episodes <= EVAL_SEED_COUNT):
         parser.error("--eval-episodes must be 0–200, or 1–200 with --evaluate")
@@ -93,9 +98,10 @@ def main():
                 policy = PPO.load(args.resume, env=vec, device=args.device, seed=args.seed, **overrides)
             vec.seed(args.seed)
         else:
-            vision = features == "vision"
-            extractors = {"grid": StateFeatures, "navigation": NavigationFeatures, "vision": VisionFeatures}
-            layers = [96, 64] if features == "navigation" else [64]
+            vision = features.startswith("vision")
+            extractors = {"grid": StateFeatures, "navigation": NavigationFeatures, "vision": VisionFeatures,
+                          "vision-spatial": SpatialVisionFeatures}
+            layers = [96, 64] if features in ("navigation", "vision-spatial") else [64]
             policy_kwargs = {
                 "features_extractor_class": extractors[features],
                 "normalize_images": vision, "net_arch": {"pi": layers, "vf": layers},
@@ -107,18 +113,28 @@ def main():
                 gamma=.995, gae_lambda=.95, ent_coef=.01,
                 policy_kwargs=policy_kwargs,
             )
+            if args.initialize_navigation:
+                source = PPO.load(args.initialize_navigation, device=args.device)
+                if checkpoint_features(source) != "navigation":
+                    parser.error("--initialize-navigation expects a navigation policy")
+                policy.policy.features_extractor.initialize_from_navigation(source.policy.features_extractor)
+                policy.policy.mlp_extractor.load_state_dict(source.policy.mlp_extractor.state_dict())
+                policy.policy.action_net.load_state_dict(source.policy.action_net.state_dict())
+                policy.policy.value_net.load_state_dict(source.policy.value_net.state_dict())
+                policy.save(output / "spatial_initial")
         policy.set_logger(configure(str(output), ["stdout", "csv"]))
         print(f"Training on {policy.device} with {features} observations. Outputs: {output}", flush=True)
         if args.imitation_episodes:
             from .imitation import warm_start
 
             history = warm_start(policy, args.imitation_episodes, args.imitation_epochs,
-                                 args.seed, arena_only=args.stage == "arena", features=features)
+                                 args.seed, arena_only=args.stage == "arena", features=features,
+                                 keep_normalization=bool(args.initialize_navigation))
             (output / "imitation.json").write_text(json.dumps(history, indent=2) + "\n", encoding="utf-8")
             policy.save(output / "imitation")
         checkpoint = CheckpointCallback(
             save_freq=max(50_000 // args.envs, 1), save_path=str(output / "checkpoints"),
-            name_prefix="vision_ppo" if features == "vision" else "state_ppo",
+            name_prefix="vision_ppo" if features.startswith("vision") else "state_ppo",
         )
         try:
             if args.steps:
@@ -133,7 +149,7 @@ def main():
             print(f"Saved interrupted checkpoint to {output / 'interrupted.zip'}")
             return
         if args.steps:
-            policy.save(output / ("vision_ppo" if features == "vision" else "state_ppo"))
+            policy.save(output / ("vision_ppo" if features.startswith("vision") else "state_ppo"))
     finally:
         vec.close()
 

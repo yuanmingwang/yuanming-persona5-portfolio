@@ -14,7 +14,9 @@ MAX_EPISODE_STEPS = 1200
 
 def checkpoint_features(policy):
     spaces = policy.observation_space.spaces
-    return "vision" if "frames" in spaces else "navigation" if "moves" in spaces else "grid"
+    if "frames" in spaces:
+        return "vision-spatial" if "moves" in spaces else "vision"
+    return "navigation" if "moves" in spaces else "grid"
 
 
 def evaluate(policy, episodes, *, first_seed=EVAL_FIRST_SEED, first_level_only=False):

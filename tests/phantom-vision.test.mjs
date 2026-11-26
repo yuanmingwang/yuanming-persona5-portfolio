@@ -3,6 +3,7 @@ import { test } from 'node:test'
 import { createRun } from '../src/demos/phantom-escape/engine.ts'
 import { centerOf } from '../src/demos/phantom-escape/map.ts'
 import { createVisionPainter, VISION_HEIGHT, VISION_WIDTH } from '../src/demos/phantom-escape/vision.ts'
+import { observeVisionMoves, readVisionScene } from '../src/demos/phantom-escape/vision-spatial.ts'
 
 test('the vision renderer draws deterministic RGB with sub-tile movement and exit state', () => {
   const run = createRun(5300)
@@ -19,4 +20,19 @@ test('the vision renderer draws deterministic RGB with sub-tile movement and exi
   assert.deepEqual([...unlocked.slice(exit, exit + 3)], [65, 245, 161])
   run.board.player.x += 2
   assert.notDeepEqual(paint(run.board), unlocked)
+})
+
+test('spatial features recover the visible maze and objectives from RGB alone', () => {
+  const run = createRun(5301)
+  const frame = createVisionPainter()(run.board)
+  const scene = readVisionScene(frame)
+  assert.deepEqual(scene.floor, run.board.maze.floor)
+  assert.deepEqual(scene.coins, [...run.board.coins].sort((a, b) => a - b))
+  assert.equal(scene.exit, run.board.maze.exit)
+  assert.deepEqual(scene.player, run.board.player)
+  const moves = observeVisionMoves(frame, false)
+  assert.equal(moves.length, 99)
+  assert.ok(moves.every(value => Number.isFinite(value) && value >= -1 && value <= 1))
+  assert.deepEqual(moves.slice(0, 4), [0, 0, 0, 0])
+  assert.deepEqual(observeVisionMoves(frame, false), moves)
 })

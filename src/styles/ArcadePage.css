@@ -155,6 +155,22 @@
   color: var(--arcade-paper);
 }
 
+.phantom-game .dino-mode {
+  flex-wrap: wrap;
+}
+
+.phantom-vision {
+  width: min(100%, 250px);
+  margin: 0;
+}
+
+.phantom-vision canvas {
+  display: block;
+  width: 100%;
+  height: auto;
+  image-rendering: pixelated;
+}
+
 .phantom-pad {
   display: none;
 }

@@ -48,6 +48,21 @@ class TestReplay(unittest.TestCase):
 
 @unittest.skipUnless(importlib.util.find_spec("gymnasium"), "Gymnasium is not installed")
 class TestGymnasium(unittest.TestCase):
+    def test_spatial_vision_profile_keeps_rgb_and_pixel_derived_moves(self):
+        import numpy as np
+        from gymnasium.utils.env_checker import check_env
+        from scripts.phantom_escape.env import PhantomEscapeEnv
+
+        with PhantomEscapeEnv(features="vision-spatial") as env:
+            check_env(env, skip_render_check=True)
+            observation, info = env.reset(seed=5301)
+            self.assertTrue(env.observation_space.contains(observation))
+            self.assertEqual(observation["moves"].shape, (99,))
+            with SimulatorClient() as bridge:
+                reference = bridge.request("reset", seed=5301, features="vision-spatial")
+            self.assertEqual(reference["info"], info)
+            np.testing.assert_array_equal(observation["moves"], np.asarray(reference["observation"]["moves"], dtype=np.float32))
+
     def test_vision_stack_uses_latest_pixels_and_reset_clears_history(self):
         import numpy as np
         from gymnasium.utils.env_checker import check_env

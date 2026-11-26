@@ -65,3 +65,29 @@ class VisionFeatures(BaseFeaturesExtractor):
 
     def forward(self, observations):
         return torch.cat((self.cnn(observations["frames"]), observations["hud"]), dim=1)
+
+
+class SpatialVisionFeatures(NavigationFeatures):
+    """Fuse pixel-derived spatial features with a learned residual from RGB."""
+
+    def __init__(self, observation_space):
+        super().__init__(observation_space)
+        channels = observation_space["frames"].shape[0]
+        self.residual = nn.Sequential(
+            nn.Conv2d(channels, 16, kernel_size=8, stride=4, padding=2),
+            nn.ReLU(),
+            nn.Conv2d(16, 24, kernel_size=4, stride=4),
+            nn.ReLU(),
+            nn.AdaptiveMaxPool2d((6, 10)),
+            nn.Flatten(),
+            nn.Linear(24 * 6 * 10, self.features_dim),
+        )
+
+    def forward(self, observations):
+        return super().forward(observations) + self.residual(observations["frames"])
+
+    def initialize_from_navigation(self, source):
+        self.center.copy_(source.center)
+        self.scale.copy_(source.scale)
+        nn.init.zeros_(self.residual[-1].weight)
+        nn.init.zeros_(self.residual[-1].bias)

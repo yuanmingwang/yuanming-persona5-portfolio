@@ -2,9 +2,11 @@ import { createInterface } from 'node:readline'
 import { deflateRawSync } from 'node:zlib'
 import { createRun } from '../../src/demos/phantom-escape/engine.ts'
 import { createVisionPainter, VISION_HEIGHT, VISION_HISTORY, VISION_WIDTH } from '../../src/demos/phantom-escape/vision.ts'
-import { advance, describe, observe, observeHud, spec } from './simulation.ts'
+import { advance, describe, observe, spec } from './simulation.ts'
 import { createTeacher } from './teacher.ts'
-import { createMoveObservation, MOVE_FIELDS } from './forecast.ts'
+import { createMoveObservation, MOVE_FIELDS } from '../../src/demos/phantom-escape/forecast.ts'
+import { observeVisionMoves } from '../../src/demos/phantom-escape/vision-spatial.ts'
+import { observeHud } from '../../src/demos/phantom-escape/observations.ts'
 
 let run
 let teacher
@@ -29,7 +31,7 @@ for await (const line of lines) {
         throw new RangeError('Expected an unsigned 32-bit seed')
       }
       const profile = message.features ?? 'grid'
-      if (!['grid', 'navigation', 'vision'].includes(profile)) throw new RangeError('Unknown observation profile')
+      if (!['grid', 'navigation', 'vision', 'vision-spatial'].includes(profile)) throw new RangeError('Unknown observation profile')
       run = createRun(message.seed)
       teacher = undefined
       features = profile
@@ -47,9 +49,15 @@ for await (const line of lines) {
     } else {
       throw new Error('Unknown simulator command')
     }
-    const observation = features === 'vision'
-      ? { frame: deflateRawSync(paintVision(run.board), { level: 1 }).toString('base64'), hud: observeHud(run) }
-      : features === 'navigation' ? { moves: observeMoves(run.board), hud: observeHud(run) } : observe(run)
+    let observation
+    if (features === 'vision' || features === 'vision-spatial') {
+      const frame = paintVision(run.board)
+      const hud = observeHud(run)
+      observation = { frame: deflateRawSync(frame, { level: 1 }).toString('base64'), hud }
+      if (features === 'vision-spatial') observation.moves = observeVisionMoves(frame, hud[4] === 1)
+    } else {
+      observation = features === 'navigation' ? { moves: observeMoves(run.board), hud: observeHud(run) } : observe(run)
+    }
     process.stdout.write(JSON.stringify({
       observation,
       info: describe(run), transition,

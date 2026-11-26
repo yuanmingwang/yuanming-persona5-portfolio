@@ -61,14 +61,13 @@ function canOccupy(floor: Uint8Array, x: number, y: number) {
     floor[cellAt(x + PLAYER_RADIUS, y + PLAYER_RADIUS)] === 1
 }
 
-function movePlayer(board: Board, movement: Movement) {
-  const { player, maze } = board
+export function movePlayerOnFloor(player: Point, floor: Uint8Array, movement: Movement) {
   const step = movement.x && movement.y ? PLAYER_STEP * Math.SQRT1_2 : PLAYER_STEP
   const x = player.x + movement.x * step
   const y = player.y + movement.y * step
   // Resolve one axis at a time to allow wall sliding without crossing blocked corners.
-  if (canOccupy(maze.floor, x, player.y)) player.x = x
-  if (canOccupy(maze.floor, player.x, y)) player.y = y
+  if (canOccupy(floor, x, player.y)) player.x = x
+  if (canOccupy(floor, player.x, y)) player.y = y
 }
 
 function moveEnemies(board: Board, playerCell: number, sounds: Sound[]) {
@@ -118,7 +117,7 @@ function near(a: Point, b: Point, radius: number) {
 }
 
 export function advanceActors(board: Board, movement: Movement, sounds: Sound[]) {
-  movePlayer(board, movement)
+  movePlayerOnFloor(board.player, board.maze.floor, movement)
   const cell = cellAt(board.player.x, board.player.y)
   moveEnemies(board, cell, sounds)
   return cell

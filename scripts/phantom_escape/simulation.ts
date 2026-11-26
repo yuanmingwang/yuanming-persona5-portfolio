@@ -1,13 +1,7 @@
-import { coinsCollected, PLAYER_STEP, stepRun, TICKS_PER_SECOND } from '../../src/demos/phantom-escape/engine.ts'
-import type { Movement, PhantomRun } from '../../src/demos/phantom-escape/engine.ts'
+import { coinsCollected, PLAYER_STEP, stepRun } from '../../src/demos/phantom-escape/engine.ts'
+import type { PhantomRun } from '../../src/demos/phantom-escape/engine.ts'
 import { cellAt, centerOf, COLUMNS, ROWS } from '../../src/demos/phantom-escape/map.ts'
-
-export const ACTIONS: readonly Movement[] = [
-  { x: 0, y: 0 }, { x: 0, y: -1 }, { x: 1, y: -1 },
-  { x: 1, y: 0 }, { x: 1, y: 1 }, { x: 0, y: 1 },
-  { x: -1, y: 1 }, { x: -1, y: 0 }, { x: -1, y: -1 },
-]
-export const TICKS_PER_ACTION = TICKS_PER_SECOND / 10
+import { ACTIONS, observeHud, TICKS_PER_ACTION } from '../../src/demos/phantom-escape/observations.ts'
 const CELL_COUNT = COLUMNS * ROWS
 
 export const spec = {
@@ -43,13 +37,6 @@ export function observe(run: PhantomRun) {
     grid: Array.from(grid),
     hud: observeHud(run),
   }
-}
-
-export function observeHud(run: PhantomRun) {
-  const { board } = run
-  const collected = coinsCollected(board)
-  return [board.ticksLeft / (90 * TICKS_PER_SECOND), run.level / (run.level + 1),
-    board.quota / 40, collected / 40, Number(collected >= board.quota)]
 }
 
 export function advance(run: PhantomRun, action: number) {

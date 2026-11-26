@@ -1,8 +1,8 @@
 import type { PhantomRun } from '../../src/demos/phantom-escape/engine.ts'
 import { cellAt, centerOf } from '../../src/demos/phantom-escape/map.ts'
 import { createTacticalPlayer } from '../../src/demos/phantom-escape/tactics.ts'
-import { ACTIONS } from './simulation.ts'
-import { projectMove } from './forecast.ts'
+import { ACTIONS } from '../../src/demos/phantom-escape/observations.ts'
+import { projectMove } from '../../src/demos/phantom-escape/forecast.ts'
 
 export function createTeacher() {
   const controller = createTacticalPlayer()

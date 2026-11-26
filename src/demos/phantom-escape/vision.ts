@@ -7,7 +7,7 @@ export const VISION_HEIGHT = HEIGHT / 2
 export const VISION_HISTORY = 4
 
 type Color = readonly [number, number, number]
-const colors = {
+export const VISION_COLORS = {
   wall: [16, 14, 24], floor: [44, 36, 54], coin: [255, 197, 65],
   locked: [250, 65, 115], exit: [65, 245, 161], player: [255, 248, 228],
   patroller: [151, 107, 255], chaser: [248, 90, 60],
@@ -38,16 +38,16 @@ export function createVisionPainter() {
       const tile = TILE / 2
       for (const [cell, walkable] of floor.entries()) {
         paintRect(terrain, cell % COLUMNS * tile, Math.floor(cell / COLUMNS) * tile, tile, tile,
-          walkable ? colors.floor : colors.wall)
+          walkable ? VISION_COLORS.floor : VISION_COLORS.wall)
       }
       floorSeen = floor
     }
 
     const frame = terrain.slice()
-    marker(frame, centerOf(exit), 3, coinsCollected(board) >= board.quota ? colors.exit : colors.locked)
-    for (const coin of board.coins) marker(frame, centerOf(coin), 2, colors.coin)
-    for (const enemy of board.enemies) marker(frame, enemy, 3, colors[enemy.kind])
-    marker(frame, board.player, 3, colors.player)
+    marker(frame, centerOf(exit), 3, coinsCollected(board) >= board.quota ? VISION_COLORS.exit : VISION_COLORS.locked)
+    for (const coin of board.coins) marker(frame, centerOf(coin), 2, VISION_COLORS.coin)
+    for (const enemy of board.enemies) marker(frame, enemy, 3, VISION_COLORS[enemy.kind])
+    marker(frame, board.player, 3, VISION_COLORS.player)
     return frame
   }
 }

@@ -1,7 +1,7 @@
-import { advanceActors, coinsCollected, HIT_DISTANCE, PLAYER_STEP } from '../../src/demos/phantom-escape/engine.ts'
-import type { Board, Movement, Sound } from '../../src/demos/phantom-escape/engine.ts'
-import { cellAt, centerOf, floorNeighbors, TILE } from '../../src/demos/phantom-escape/map.ts'
-import { ACTIONS, TICKS_PER_ACTION } from './simulation.ts'
+import { advanceActors, coinsCollected, HIT_DISTANCE, PLAYER_STEP } from './engine.ts'
+import type { Board, Movement, Sound } from './engine.ts'
+import { cellAt, centerOf, floorNeighbors, TILE } from './map.ts'
+import { ACTIONS, TICKS_PER_ACTION } from './observations.ts'
 
 export function projectMove(board: Board, action: Movement) {
   const projected = { ...board, player: { ...board.player }, enemies: board.enemies.map(enemy => ({ ...enemy })) }
@@ -22,7 +22,7 @@ export function projectMove(board: Board, action: Movement) {
   return { player: projected.player, clearance, caught: clearance <= HIT_DISTANCE, pickup }
 }
 
-function distanceField(floor: Uint8Array, targets: Iterable<number>) {
+export function distanceField(floor: Uint8Array, targets: Iterable<number>) {
   const distances = new Int16Array(floor.length).fill(-1)
   const queue = [...targets]
   for (const cell of queue) distances[cell] = 0
@@ -36,7 +36,7 @@ function distanceField(floor: Uint8Array, targets: Iterable<number>) {
   return distances
 }
 
-function distanceAt(floor: Uint8Array, field: Int16Array, player: Board['player']) {
+export function distanceAt(floor: Uint8Array, field: Int16Array, player: Board['player']) {
   const cell = cellAt(player.x, player.y)
   if (field[cell] < 0) return 0
   let best = Infinity

@@ -74,7 +74,7 @@ A published Menu sheet can add or reorder the `arcade` row. Older sheets get the
 
 Dino Runner loads when you open Arcade. Its logistic classifier uses two grayscale frames to estimate obstacle gap and closing speed. To regenerate the bundled weights from synthetic frame pairs, run `node scripts/train-dino.mjs`. Night Flight runs a small CNN in the browser. It locates the bird and pipe gaps from grayscale frames, and a controller plans flaps from the resulting estimates. AI Vision shows live frames, a color-coded CNN output, position estimates, and decision timing in both Human and AI mode. Add future demos to the catalog in `src/pages/ArcadePage.tsx`.
 
-Phantom Escape opens in AI mode. Select Start Run to watch Tactical A* collect coins, avoid phantoms, and find the exit. Show AI Plan displays its route, explored tiles, and predicted danger. Switch to Human at any time to move with WASD, the arrow keys, or the touch controls. Collect at least 60% of the coins and reach the unlocked exit before time runs out. Retry Maze restarts the same seed at level 1. New Maze starts a different run.
+Phantom Escape opens in Tactical A* mode. Select Start Run to watch it collect coins, avoid phantoms, and find the exit. Show AI Plan displays its route, explored tiles, and predicted danger. State PPO and Spatial Vision are also available. Both show the chosen action, and Spatial Vision shows the RGB frame it reads. Switch to Human at any time to move with WASD, the arrow keys, or the touch controls. Collect at least 60% of the coins and reach the unlocked exit before time runs out. Retry Maze restarts the same seed at level 1. New Maze starts a different run.
 
 The first three levels alternate open arenas and room dungeons. Hybrid dungeons join the seeded rotation at level 4, and labyrinths join at level 7.
 
@@ -153,6 +153,30 @@ Vision PPO run:
 The first command writes `imitation.zip` and `vision_ppo.zip`. The second writes
 `imitation.zip` and `evaluation.json`, with clear counts for both starting
 layouts. The room-focused State PPO checkpoint is the learned-state benchmark.
+
+The first RGB-only CNN did not learn the task. The spatial-vision profile also
+reads the visible maze and objects from RGB, then combines those features with a
+trainable CNN. To evaluate the transfer from the selected navigation checkpoint:
+
+```sh
+.venv/bin/python -m scripts.phantom_escape.train --features vision-spatial \
+  --initialize-navigation training-output/phantom-escape/navigation-room-ppo/best_validation.zip \
+  --steps 0 --envs 2 --eval-episodes 200 \
+  --output training-output/phantom-escape/vision-spatial-transfer
+```
+
+This writes `spatial_initial.zip` and `evaluation.json`. Use the transfer
+checkpoint with `--resume` to fine-tune the CNN and policy with PPO. The RGB-only
+profile and its existing checkpoints are still available for comparison.
+
+Regenerate the website actor from the matching navigation and selected
+spatial-vision checkpoints from the repository root:
+
+```sh
+.venv/bin/python -m scripts.phantom_escape.export_browser \
+  training-output/phantom-escape/navigation-room-ppo/best_validation.zip \
+  training-output/phantom-escape/vision-spatial-ppo/best_validation.zip
+```
 
 Each CSV is separate: editing the résumé does not automatically update About, Journey, Questions, or the original Google Doc. Local edits appear during development; updating the deployed site requires a new deployment.
 

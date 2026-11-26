@@ -5,6 +5,9 @@ import type { Movement, PhantomRun, Sound } from './engine'
 import { HEIGHT, MAP_LABELS, WIDTH } from './map'
 import { createMazePainter } from './render'
 import { createTacticalPlayer } from './tactics'
+import { ACTION_LABELS, createLearnedController, readLearnedActor } from './learned'
+import type { LearnedMode } from './learned'
+import { VISION_HEIGHT, VISION_WIDTH } from './vision'
 
 const STEP_MS = 1000 / TICKS_PER_SECOND
 const SOUND_NAMES = [
@@ -24,7 +27,8 @@ const KEYS = new Map<string, Direction>([
   ['arrowright', 'right'], ['d', 'right'],
 ])
 type Phase = 'ready' | 'playing' | 'paused' | 'ended'
-type Mode = 'human' | 'ai'
+type Mode = 'human' | 'ai' | LearnedMode
+const modes: [Mode, string][] = [['human', 'Human'], ['ai', 'Tactical A*'], ['state', 'State PPO'], ['vision', 'Spatial Vision']]
 const buttonLabel = { ready: 'Start run', playing: 'Pause', paused: 'Resume', ended: 'Retry maze' }
 
 function newSeed() {
@@ -51,6 +55,19 @@ function readHud(run: PhantomRun) {
   }
 }
 
+function drawVision(canvas: HTMLCanvasElement | null, pixels: Uint8Array) {
+  const context = canvas?.getContext('2d')
+  if (!context) return
+  const image = context.createImageData(VISION_WIDTH, VISION_HEIGHT)
+  for (let offset = 0, pixel = 0; offset < pixels.length; offset += 3, pixel += 4) {
+    image.data[pixel] = pixels[offset]
+    image.data[pixel + 1] = pixels[offset + 1]
+    image.data[pixel + 2] = pixels[offset + 2]
+    image.data[pixel + 3] = 255
+  }
+  context.putImageData(image, 0, 0)
+}
+
 export default function PhantomEscape() {
   const screenRef = useRef<HTMLCanvasElement>(null)
   const runRef = useRef<PhantomRun | null>(null)
@@ -62,10 +79,15 @@ export default function PhantomEscape() {
   const [showPlan, setShowPlan] = useState(true)
   const [intent, setIntent] = useState('')
   const controllerRef = useRef<ReturnType<typeof createTacticalPlayer> | null>(null)
+  const learnedRef = useRef<ReturnType<typeof createLearnedController> | null>(null)
+  const visionRef = useRef<HTMLCanvasElement>(null)
+  const [actor, setActor] = useState<ReturnType<typeof readLearnedActor> | null>(null)
+  const [loadFailed, setLoadFailed] = useState(false)
   const [phase, setPhase] = useState<Phase>('ready')
   const [failure, setFailure] = useState<PhantomRun['ended']>(null)
   const [hud, setHud] = useState(() => readHud(createRun(initialSeed)))
   const [effects, setEffects] = useState(true)
+  const isLearnedMode = mode === 'state' || mode === 'vision'
 
   useEffect(() => {
     const context = screenRef.current?.getContext('2d')
@@ -88,12 +110,28 @@ export default function PhantomEscape() {
   }, [mode, showPlan])
 
   useEffect(() => {
+    if ((mode !== 'state' && mode !== 'vision') || actor) return
+    let active = true
+    import('./learned-weights.json').then(({ default: weights }) => {
+      if (!active) return
+      const loaded = readLearnedActor(weights)
+      setActor(() => loaded)
+      setLoadFailed(false)
+    }).catch(() => {
+      if (active) setLoadFailed(true)
+    })
+    return () => { active = false }
+  }, [mode, actor])
+
+  useEffect(() => {
     if (phase !== 'playing') return
     const run = runRef.current
     const paint = paintRef.current
-    if (!run || !paint) return
+    if (!run || !paint || (isLearnedMode && !actor)) return
     const activeInputs = inputs.current
     const controller = mode === 'ai' ? (controllerRef.current ??= createTacticalPlayer()) : undefined
+    const learned = isLearnedMode && actor ? (learnedRef.current ??= createLearnedController(mode, actor)) : undefined
+    let previousVision: Uint8Array | undefined
     let frame: number
     let previous: number | undefined
     let elapsed = 0
@@ -107,7 +145,8 @@ export default function PhantomEscape() {
       const movement = readMovement(activeInputs)
       while (elapsed >= STEP_MS && !run.ended) {
         elapsed -= STEP_MS
-        for (const sound of stepRun(run, controller?.movement(run) ?? movement)) audioRef.current?.play(sound)
+        const input = learned?.movement(run) ?? controller?.movement(run) ?? movement
+        for (const sound of stepRun(run, input)) audioRef.current?.play(sound)
       }
       const nextHud = readHud(run)
       if (nextHud.seconds !== previousHud.seconds || nextHud.score !== previousHud.score) {
@@ -115,12 +154,16 @@ export default function PhantomEscape() {
         setHud(nextHud)
       }
       const plan = controller?.plan
-      const nextIntent = plan?.evading ? 'Evade' : (plan?.intent ?? '')
+      const nextIntent = learned ? ACTION_LABELS[learned.action] : plan?.evading ? 'Evade' : (plan?.intent ?? '')
       if (nextIntent !== previousIntent) {
         previousIntent = nextIntent
         setIntent(nextIntent)
       }
       paint(run, showPlan ? plan : undefined)
+      if (learned?.frame && learned.frame !== previousVision) {
+        previousVision = learned.frame
+        drawVision(visionRef.current, previousVision)
+      }
       if (run.ended) {
         setFailure(run.ended)
         setPhase('ended')
@@ -140,7 +183,7 @@ export default function PhantomEscape() {
       document.removeEventListener('visibilitychange', pauseWhenHidden)
       activeInputs.clear()
     }
-  }, [mode, phase, showPlan])
+  }, [mode, phase, showPlan, isLearnedMode, actor])
 
   function configureAudio(enabled: boolean) {
     if (enabled && !audioRef.current && typeof AudioContext !== 'undefined') {
@@ -154,6 +197,8 @@ export default function PhantomEscape() {
     inputs.current.clear()
     runRef.current = run
     controllerRef.current = null
+    learnedRef.current = null
+    visionRef.current?.getContext('2d')?.clearRect(0, 0, VISION_WIDTH, VISION_HEIGHT)
     paintRef.current?.(run)
     setHud(readHud(run))
     setFailure(null)
@@ -164,6 +209,8 @@ export default function PhantomEscape() {
     if (nextMode === mode) return
     inputs.current.clear()
     controllerRef.current = null
+    learnedRef.current = null
+    setLoadFailed(false)
     setIntent('')
     setMode(nextMode)
     screenRef.current?.focus({ preventScroll: true })
@@ -173,6 +220,7 @@ export default function PhantomEscape() {
     if (phase === 'playing') {
       setPhase('paused')
     } else {
+      if (isLearnedMode && !actor) return
       if (phase === 'ended' && runRef.current) resetRun(runRef.current.seed)
       configureAudio(effects)
       audioRef.current?.play('select')
@@ -193,11 +241,13 @@ export default function PhantomEscape() {
         <h2 id="phantom-escape-title">Phantom Escape</h2>
         <div className="arcade-header-controls">
           <div className="dino-mode" role="group" aria-label="Who controls the player">
-            <button type="button" aria-pressed={mode === 'human'} onClick={() => selectMode('human')}>Human</button>
-            <button type="button" aria-pressed={mode === 'ai'} onClick={() => selectMode('ai')}>AI</button>
+            {modes.map(([id, label]) => (
+              <button key={id} type="button" aria-pressed={mode === id} onClick={() => selectMode(id)}>{label}</button>
+            ))}
           </div>
           <div className="arcade-controls">
-            <button type="button" className="arcade-primary" onClick={togglePlay}>{buttonLabel[phase]}</button>
+            <button type="button" className="arcade-primary" disabled={isLearnedMode && !actor}
+              onClick={togglePlay}>{buttonLabel[phase]}</button>
             <button type="button" onClick={() => {
               resetRun(newSeed())
               setPhase('ready')
@@ -258,9 +308,19 @@ export default function PhantomEscape() {
       <p id="phantom-help" className="arcade-help">
         {mode === 'human'
           ? 'Move with WASD, arrow keys or the touch arrows. Collect enough coins to unlock the door before time runs out.'
-          : 'Tactical A* collects coins and routes around phantoms. Switch to Human to take over.'}
+          : mode === 'ai' ? 'Tactical A* collects coins and routes around phantoms.'
+            : mode === 'state' ? 'State PPO uses the simulator’s positions to score moves.'
+              : 'Spatial Vision scores moves using the rendered pixels and HUD.'}
         {' Press Esc to pause.'}
       </p>
+      {isLearnedMode && <div className="phantom-plan arcade-help">
+        {!actor && <span role="status">{loadFailed ? 'Could not load the learned policy.' : 'Loading the learned policy…'}</span>}
+        {mode === 'vision' && <figure className="phantom-vision">
+          <canvas ref={visionRef} width={VISION_WIDTH} height={VISION_HEIGHT} aria-label="Pixels used by Spatial Vision" />
+          <figcaption>Model input</figcaption>
+        </figure>}
+        {intent && <strong>Action {intent}</strong>}
+      </div>}
       {mode === 'ai' && <div className="phantom-plan arcade-help">
         <label><input type="checkbox" checked={showPlan} onChange={event => setShowPlan(event.target.checked)} /> Show AI plan</label>
         {showPlan && <span>Teal path · blue explored tiles · red danger</span>}

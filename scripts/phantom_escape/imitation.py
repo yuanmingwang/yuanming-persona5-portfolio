@@ -15,7 +15,7 @@ def collect(episodes, arena_only, features="grid"):
     states, huds, actions = [], [], []
     with SimulatorClient() as simulator:
         spec = simulator.request("spec")
-        vision = VisionFrames(spec) if features == "vision" else None
+        vision = VisionFrames(spec) if features.startswith("vision") else None
         key = "moves" if features == "navigation" else "grid"
         shape = (spec["movesSize"],) if key == "moves" else spec["gridShape"]
         for index in range(episodes):
@@ -26,7 +26,7 @@ def collect(episodes, arena_only, features="grid"):
                 current = result["observation"]
                 if vision:
                     frames = vision.append(current["frame"], result["info"]["level"], reset=step == 0)
-                    demo_states.append(frames)
+                    demo_states.append((frames, current["moves"]) if features == "vision-spatial" else frames)
                 else:
                     demo_states.append(np.asarray(current[key], dtype=np.float16).reshape(shape))
                 result = simulator.request("expert")
@@ -44,19 +44,25 @@ def collect(episodes, arena_only, features="grid"):
     return states if vision else np.stack(states), np.asarray(huds, dtype=np.float32), np.asarray(actions, dtype=np.int64)
 
 
-def warm_start(model, episodes, epochs, seed, arena_only, features="grid"):
+def warm_start(model, episodes, epochs, seed, arena_only, features="grid", *, keep_normalization=False):
     import torch
     from torch.nn import functional as F
 
     states, huds, actions = collect(episodes, arena_only, features)
-    key = {"grid": "grid", "navigation": "moves", "vision": "frames"}[features]
+    key = "frames" if features.startswith("vision") else "moves" if features == "navigation" else "grid"
     vision = None
     batch_size = BATCH_SIZE
-    if features == "vision":
+    if key == "frames":
         with SimulatorClient() as simulator:
             vision = VisionFrames(simulator.request("spec"))
         batch_size = 16
-    if features == "navigation":
+    move_inputs = None
+    if features == "vision-spatial":
+        states, move_inputs = zip(*states)
+        move_inputs = np.asarray(move_inputs, dtype=np.float32)
+    if move_inputs is not None and not keep_normalization:
+        model.policy.features_extractor.normalize_from(move_inputs, huds)
+    elif features == "navigation":
         model.policy.features_extractor.normalize_from(states, huds)
     rng = np.random.default_rng(seed)
     model.policy.set_training_mode(True)
@@ -78,6 +84,8 @@ def warm_start(model, episodes, epochs, seed, arena_only, features="grid"):
                 key: inputs,
                 "hud": torch.as_tensor(huds[batch], device=model.device),
             }
+            if move_inputs is not None:
+                observations["moves"] = torch.as_tensor(move_inputs[batch], device=model.device)
             labels = torch.as_tensor(actions[batch], device=model.device)
             distribution = model.policy.get_distribution(observations).distribution
             loss = F.cross_entropy(distribution.logits, labels)
