@@ -119,6 +119,10 @@
   gap: 22px;
 }
 
+.phantom-workspace {
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 36%);
+}
+
 .arcade-game {
   border: 1px solid #815466;
   background: #18141b;
@@ -129,12 +133,9 @@
   scroll-margin-block: 70px 72px;
 }
 
-.phantom-game {
-  max-width: 900px;
-}
-
 .phantom-score {
   flex-wrap: wrap;
+  gap: 8px clamp(12px, 1.35vw, 22px);
 }
 
 .phantom-score .phantom-urgent {
@@ -159,16 +160,105 @@
   flex-wrap: wrap;
 }
 
-.phantom-vision {
-  width: min(100%, 250px);
+.phantom-frames canvas {
+  aspect-ratio: 5 / 3;
+  background: #191521;
+}
+
+.dino-frames.phantom-frames {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.phantom-probabilities,
+.phantom-guide {
+  color: var(--arcade-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.phantom-probabilities {
+  margin: 14px var(--vision-inset);
+}
+
+.phantom-probabilities h3,
+.phantom-guide h3,
+.phantom-guide h4 {
+  margin: 0 0 6px;
+  color: var(--arcade-paper);
+}
+
+.phantom-probabilities ol {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.phantom-probabilities li {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr) 50px;
+  align-items: center;
+  gap: 8px;
+}
+
+.phantom-probabilities strong {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.phantom-probability-track {
+  height: 5px;
+  background: #44303e;
+}
+
+.phantom-probability-track span {
+  display: block;
+  height: 100%;
+  background: #ff5b79;
+}
+
+.phantom-guide {
+  padding: 14px 16px 16px;
+  border-top: 1px solid #603445;
+}
+
+.phantom-guide p {
+  margin: 0 0 8px;
+}
+
+.phantom-guide-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px 22px;
+  margin-block: 13px;
+}
+
+.phantom-guide dl {
+  display: grid;
+  gap: 5px;
   margin: 0;
 }
 
-.phantom-vision canvas {
-  display: block;
-  width: 100%;
-  height: auto;
-  image-rendering: pixelated;
+.phantom-guide dt {
+  color: var(--arcade-paper);
+  font-weight: 700;
+}
+
+.phantom-guide dd {
+  margin: 0;
+}
+
+.phantom-guide .phantom-patroller {
+  color: #c3a9ff;
+}
+
+.phantom-guide .phantom-chaser {
+  color: #ff8299;
+}
+
+.phantom-guide .phantom-seed-note {
+  margin-bottom: 0;
 }
 
 .phantom-pad {
@@ -565,6 +655,18 @@
 
   .dino-frames {
     grid-template-columns: repeat(2, minmax(0, 180px));
+  }
+}
+
+@media (min-width: 600px) and (max-width: 850px) {
+  .dino-frames.phantom-frames {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 540px) {
+  .phantom-guide-grid {
+    grid-template-columns: 1fr;
   }
 }
 

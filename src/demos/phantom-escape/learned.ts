@@ -7,6 +7,12 @@ import { createVisionPainter } from './vision.ts'
 export type LearnedMode = 'state' | 'vision'
 export const ACTION_LABELS = ['Wait', 'Up', 'Up-right', 'Right', 'Down-right', 'Down', 'Down-left', 'Left', 'Up-left']
 
+export type LearnedDecision = {
+  action: number
+  alternatives: { action: number; probability: number }[]
+  duration: number
+}
+
 const LAYERS = [ACTIONS.length * MOVE_FIELDS + 5, 96, 64, ACTIONS.length]
 
 export function readLearnedActor(asset: { version: number; float32: string }) {
@@ -54,14 +60,22 @@ export function createLearnedController(mode: LearnedMode, actor: ReturnType<typ
   let untilNext = 0
   let action = 0
   let frame: Uint8Array | undefined
+  let decision: LearnedDecision | undefined
   return {
     movement(run: PhantomRun) {
       if (untilNext === 0) {
+        const started = performance.now()
         const hud = observeHud(run)
         frame = mode === 'vision' ? paintVision(run.board) : undefined
         const moves = frame ? observeVisionMoves(frame, hud[4] === 1) : observeState(run.board)
         const logits = actor([...moves, ...hud])
         action = logits.reduce((best, score, candidate) => score > logits[best] ? candidate : best, 0)
+        const duration = performance.now() - started
+        const weights = logits.map(logit => Math.exp(logit - logits[action]))
+        const total = weights.reduce((sum, weight) => sum + weight, 0)
+        const alternatives = Array.from(weights, (weight, id) => ({ action: id, probability: weight / total }))
+          .sort((a, b) => b.probability - a.probability).slice(0, 3)
+        decision = { action, alternatives, duration }
         untilNext = TICKS_PER_ACTION
       }
       untilNext--
@@ -69,5 +83,6 @@ export function createLearnedController(mode: LearnedMode, actor: ReturnType<typ
     },
     get action() { return action },
     get frame() { return frame },
+    get decision() { return decision },
   }
 }

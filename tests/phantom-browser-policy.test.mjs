@@ -26,12 +26,17 @@ test('Spatial Vision samples RGB and holds each action between decisions', () =>
   const run = createRun(5301)
   const controller = createLearnedController('vision', actor)
   const action = controller.movement(run)
+  const decision = controller.decision
+  assert.equal(decision.action, controller.action)
+  assert.equal(decision.alternatives[0].action, decision.action)
+  assert.ok(decision.alternatives.every(({ probability }) => probability >= 0 && probability <= 1))
   const firstFrame = controller.frame
   assert.equal(firstFrame.length, 320 * 192 * 3)
   stepRun(run, action)
   for (let tick = 1; tick < TICKS_PER_ACTION; tick++) {
     assert.equal(controller.movement(run), action)
     assert.equal(controller.frame, firstFrame)
+    assert.equal(controller.decision, decision)
     stepRun(run, action)
   }
   controller.movement(run)
