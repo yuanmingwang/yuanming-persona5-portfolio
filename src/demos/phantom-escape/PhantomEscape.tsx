@@ -14,6 +14,7 @@ import { createVisionPainter } from './vision'
 import PhantomGuide from './PhantomGuide'
 
 const STEP_MS = 1000 / TICKS_PER_SECOND
+const MAX_SEED = 0xffff_ffff
 const SOUND_NAMES = [
   'select', 'coin', 'unlock_exit', 'alert_enemy_detect_player', 'death',
   'level_clear', 'level_clear_perfect', 'warning_countdown_begin', 'warning_countdown',
@@ -67,6 +68,8 @@ export default function PhantomEscape() {
   const audioRef = useRef<ReturnType<typeof createGameAudio<(typeof SOUND_NAMES)[number]>> | null>(null)
   const inputs = useRef(new Map<string | number, Direction>())
   const [initialSeed] = useState(newSeed)
+  const [seedInput, setSeedInput] = useState(() => String(initialSeed))
+  const [seedError, setSeedError] = useState(false)
   const [mode, setMode] = useState<Mode>('ai')
   const [showPlan, setShowPlan] = useState(true)
   const [intent, setIntent] = useState('')
@@ -135,7 +138,7 @@ export default function PhantomEscape() {
     let previousIntent = ''
 
     function animate(now: number) {
-      if (!run || !paint) return
+      if (!run || !paint || run !== runRef.current) return
       elapsed += Math.min(now - (previous ?? now), 80)
       previous = now
       const movement = readMovement(activeInputs)
@@ -201,6 +204,8 @@ export default function PhantomEscape() {
 
   function resetRun(nextSeed: number) {
     const run = createRun(nextSeed)
+    setSeedInput(String(run.seed))
+    setSeedError(false)
     inputs.current.clear()
     runRef.current = run
     controllerRef.current = null
@@ -307,6 +312,29 @@ export default function PhantomEscape() {
             setEffects(!effects)
           }}>SFX {effects ? 'ON' : 'OFF'}</button>
       </div>
+
+      <form className="phantom-seed" onSubmit={event => {
+        event.preventDefault()
+        const digits = seedInput.trim()
+        const seed = Number(digits)
+        if (!/^\d+$/.test(digits) || seed > MAX_SEED) {
+          setSeedError(true)
+          return
+        }
+        resetRun(seed)
+        setPhase('ready')
+        screenRef.current?.focus({ preventScroll: true })
+      }}>
+        <label htmlFor="phantom-seed">Maze seed</label>
+        <input id="phantom-seed" type="text" inputMode="numeric" autoComplete="off" value={seedInput}
+          aria-invalid={seedError || undefined} aria-describedby={seedError ? 'phantom-seed-error' : undefined}
+          onChange={event => {
+            setSeedInput(event.target.value)
+            setSeedError(false)
+          }} />
+        <button type="submit" className="utility-button">Load seed</button>
+        {seedError && <span id="phantom-seed-error" role="alert">Enter a whole number from 0 to 4,294,967,295.</span>}
+      </form>
 
       {mode === 'human' && <div className="phantom-pad" role="group" aria-label="Touch movement">
         {PAD.map(([direction, label]) => (

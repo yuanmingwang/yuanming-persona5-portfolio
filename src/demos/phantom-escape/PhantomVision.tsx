@@ -51,6 +51,9 @@ type Props = {
 export default function PhantomVision({ mode, intent, learnedDecision, planStats, frames, showPlan, onShowPlan, modelStatus }: Props) {
   const learned = mode === 'state' || mode === 'vision'
   const action = learnedDecision ? ACTION_LABELS[learnedDecision.action] : 'Waiting'
+  const steering = !learnedDecision ? 'Waiting'
+    : learnedDecision.avoidingEnemy ? 'Avoiding phantom'
+    : learnedDecision.recovering ? 'Unsticking' : 'Model control'
   return (
     <aside className="dino-vision" aria-labelledby="phantom-vision-title">
       <div className="dino-vision-title">
@@ -63,9 +66,7 @@ export default function PhantomVision({ mode, intent, learnedDecision, planStats
           <dd>{mode === 'human' ? 'Human' : mode === 'ai' ? intent || 'Waiting' : action}</dd>
         </div>
         {mode === 'vision' && <div><dt>Input size</dt><dd>{VISION_WIDTH} × {VISION_HEIGHT} RGB</dd></div>}
-        {learnedDecision?.avoidingEnemy
-          ? <div><dt>Steering</dt><dd>Avoiding phantom</dd></div>
-          : learnedDecision?.recovering && <div><dt>Steering</dt><dd>Unsticking</dd></div>}
+        {mode === 'vision' && <div><dt>Steering</dt><dd>{steering}</dd></div>}
         {mode === 'state' && <div><dt>Input</dt><dd>Simulator state</dd></div>}
         {learned && <div><dt>Decision time</dt><dd>{learnedDecision ? `${learnedDecision.duration.toFixed(2)} ms` : '—'}</dd></div>}
         {mode === 'ai' && <>

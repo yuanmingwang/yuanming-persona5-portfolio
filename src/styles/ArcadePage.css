@@ -142,6 +142,35 @@
   color: #ff8299;
 }
 
+.phantom-seed {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  padding: 0 16px 12px;
+  color: var(--arcade-paper);
+  font-size: 12px;
+}
+
+.phantom-seed input {
+  width: 13ch;
+  padding: 7px 8px;
+  border: 1px solid #8c6077;
+  background: #171218;
+  color: inherit;
+  font: 700 13px ui-monospace, monospace;
+}
+
+.phantom-seed input:focus-visible {
+  outline: 2px solid var(--arcade-paper);
+  outline-offset: 2px;
+}
+
+.phantom-seed [role="alert"] {
+  flex-basis: 100%;
+  color: #ff8299;
+}
+
 .phantom-plan {
   display: flex;
   align-items: center;
