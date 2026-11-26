@@ -62,3 +62,17 @@ test('the tactical controller clears at least 95 of 100 early seeds for each sta
   }
   assert.ok(results.rooms >= 95 && results.arena >= 95, JSON.stringify({ results, fails }))
 })
+
+test('the tactical controller regroups and clears a hybrid dungeon where it previously looped', () => {
+  const run = createRun(9032)
+  const controller = createTacticalPlayer()
+  let regrouped = false
+  while (run.level <= 7 && !run.ended) {
+    const movement = controller.movement(run)
+    if (run.level === 7 && controller.plan.intent === 'Regroup') regrouped = true
+    stepRun(run, movement)
+  }
+  assert.equal(regrouped, true)
+  assert.equal(run.ended, null)
+  assert.equal(run.level, 8)
+})

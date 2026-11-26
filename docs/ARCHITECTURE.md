@@ -70,8 +70,10 @@ inputs at 10 Hz and replans the route roughly five times per second. `path.ts` u
 cardinal A* with Manhattan distance and additional traversal cost around current
 and predicted enemy tiles. After collecting the quota, the controller prioritizes
 the exit. Local evasion projects a short sequence of engine ticks. When progress
-stalls, route costs favor less-visited tiles. The arcade overlay draws the current
-route, explored tiles, and enemy risk directly from the controller.
+stalls, route costs favor less-visited tiles. Repeatedly revisiting tiles can trigger
+a short regrouping route that stays in effect while the controller can follow it.
+Local evasion still takes over when a collision is likely. The arcade overlay draws
+the current route, explored tiles, and enemy risk directly from the controller.
 
 ## Loading and content lifecycle
 

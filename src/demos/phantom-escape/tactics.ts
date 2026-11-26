@@ -8,6 +8,8 @@ const PLAN_TICKS = DECISION_TICKS * 2
 const LOOKAHEAD_TICKS = DECISION_TICKS * 3
 const RISK_RADIUS = 5
 const STALL_TICKS = TICKS_PER_SECOND * 3
+const REGROUP_TICKS = TICKS_PER_SECOND * 2
+const REPEATED_TILE_LIMIT = 4
 const idle: Movement = { x: 0, y: 0 }
 const actions: readonly Movement[] = [
   { x: 1, y: 0 }, { x: 0, y: -1 }, { x: -1, y: 0 }, { x: 0, y: 1 },
@@ -16,7 +18,7 @@ const actions: readonly Movement[] = [
 
 export type TacticalPlan = {
   floor: Uint8Array
-  intent: 'Collect' | 'Escape'
+  intent: 'Collect' | 'Escape' | 'Regroup'
   evading: boolean
   route: readonly number[]
   explored: ReadonlySet<number>
@@ -72,6 +74,27 @@ function makePlan(board: Board, oldPlan: TacticalPlan | undefined, visits: Uint8
   return { floor, intent: 'Collect', evading: false, route: best, explored, risk }
 }
 
+function regroup(board: Board, visits: Uint8Array): TacticalPlan | undefined {
+  const { floor } = board.maze
+  const start = cellAt(board.player.x, board.player.y)
+  const risk = enemyRisk(board)
+  const distances = distancesFrom(floor, start, 9)
+  const explored = new Set<number>()
+  const travelCost = risk.map((value, cell) => value + visits[cell] * .5)
+  const candidates = Array.from(distances.keys()).filter(cell => distances[cell] >= 5)
+    .sort((a, b) => (risk[a] + visits[a] - distances[a] * .1) - (risk[b] + visits[b] - distances[b] * .1))
+  let bestScore = Infinity
+  let route: number[] = []
+  for (const target of candidates.slice(0, 12)) {
+    const candidate = findRoute(floor, start, target, travelCost, explored)
+    const score = candidate.cost + visits[target] * 2 + risk[target] * 2
+    if (score >= bestScore) continue
+    route = candidate.cells
+    bestScore = score
+  }
+  if (route.length) return { floor, intent: 'Regroup', evading: false, explored, risk, route }
+}
+
 function axis(delta: number): Movement['x'] {
   return Math.abs(delta) < PLAYER_STEP / 2 ? 0 : Math.sign(delta) as Movement['x']
 }
@@ -117,7 +140,8 @@ function lookAhead(board: Board, route: readonly number[], action?: Movement) {
   return { nearest, distance, end: simulated.player }
 }
 
-function findEvasion(board: Board, route: readonly number[]) {
+function findEvasion(board: Board, plan: TacticalPlan) {
+  const { route } = plan
   if (clearance(board) > (PLAYER_STEP + board.enemyStep) * LOOKAHEAD_TICKS + HIT_DISTANCE + 5) return
   const forecast = lookAhead(board, route)
   if (forecast.nearest > HIT_DISTANCE + 5) return
@@ -126,9 +150,11 @@ function findEvasion(board: Board, route: readonly number[]) {
   let bestScore = -Infinity
   for (const action of actions) {
     const { nearest, distance, end } = lookAhead(board, route, action)
+    const endCell = cellAt(end.x, end.y)
     const remaining = Math.hypot(goal.x - end.x, goal.y - end.y)
     const collisionPenalty = nearest <= HIT_DISTANCE ? 100 : 0
-    const score = Math.min(nearest, 30) * 2 + Math.min(distance, 44) - remaining * .35 - collisionPenalty
+    const routeProgress = plan.intent === 'Regroup' ? Math.max(0, route.indexOf(endCell)) * 10 : 0
+    const score = Math.min(nearest, 30) * 2 + Math.min(distance, 44) - remaining * .35 - collisionPenalty + routeProgress
     if (score > bestScore) {
       bestScore = score
       best = action
@@ -148,6 +174,8 @@ export function createTacticalPlayer() {
   let visits = new Uint8Array(0)
   let exitDistances = new Int16Array(0)
   let evasion: Movement | undefined
+  let regroupUntil = -Infinity
+  let repeatMoves = 0
 
   return {
     get plan() { return plan },
@@ -165,6 +193,8 @@ export function createTacticalPlayer() {
           closestToExit = Infinity
           lastCollected = -1
           lastCell = -1
+          regroupUntil = -Infinity
+          repeatMoves = 0
         }
         const cell = cellAt(board.player.x, board.player.y)
         const collected = coinsCollected(board)
@@ -172,20 +202,31 @@ export function createTacticalPlayer() {
           lastProgress = tick
           lastCollected = collected
           visits.fill(0)
+          repeatMoves = 0
           if (collected >= board.quota) closestToExit = Math.min(closestToExit, exitDistances[cell])
         }
         if (cell !== lastCell) {
+          repeatMoves = visits[cell] > 0 ? repeatMoves + 1 : 0
           visits[cell] = Math.min(visits[cell] + 1, 8)
           lastCell = cell
         }
         const stalled = tick - lastProgress >= STALL_TICKS
         const target = plan?.route.at(-1)
         const targetGone = target !== undefined && target !== board.maze.exit && !board.coins.has(target)
-        if (!plan || newBoard || targetGone || tick - lastPlan >= PLAN_TICKS) {
-          plan = makePlan(board, newBoard ? undefined : plan, visits, stalled)
+        const wasRegrouping = plan?.intent === 'Regroup'
+        const keepRegrouping = wasRegrouping && tick < regroupUntil && target !== cell && plan?.route.includes(cell)
+        if (!keepRegrouping && (!plan || newBoard || wasRegrouping || targetGone || tick - lastPlan >= PLAN_TICKS)) {
+          const looping = stalled && repeatMoves >= REPEATED_TILE_LIMIT
+          const retreat = looping && tick >= regroupUntil ? regroup(board, visits) : undefined
+          if (retreat) {
+            regroupUntil = tick + REGROUP_TICKS
+            repeatMoves = 0
+          }
+          plan = retreat ?? makePlan(board, newBoard || wasRegrouping ? undefined : plan, visits, stalled)
           lastPlan = tick
         }
-        evasion = findEvasion(board, plan.route)
+        if (!plan) return idle
+        evasion = findEvasion(board, plan)
         plan.evading = evasion !== undefined
       }
       return evasion ?? followRoute(board, plan?.route ?? [])
