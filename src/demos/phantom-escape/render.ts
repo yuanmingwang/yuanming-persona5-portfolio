@@ -1,6 +1,7 @@
 import { coinsCollected } from './engine.ts'
 import type { PhantomRun } from './engine.ts'
 import { centerOf, COLUMNS, HEIGHT, TILE, WIDTH } from './map.ts'
+import { paintPlayer } from './player-sprite.ts'
 import type { TacticalPlan } from './tactics.ts'
 
 export function createMazePainter(context: CanvasRenderingContext2D) {
@@ -9,9 +10,15 @@ export function createMazePainter(context: CanvasRenderingContext2D) {
   backdrop.height = HEIGHT
   const background = backdrop.getContext('2d')
   let lastFloor: Uint8Array | undefined
+  let lastPlayerX: number | undefined
+  let facing: 1 | -1 = 1
 
   return (run: PhantomRun, plan?: TacticalPlan) => {
     const { maze, player, coins, quota, enemies } = run.board
+    if (lastFloor !== maze.floor) {
+      lastPlayerX = undefined
+      facing = 1
+    }
     if (background && lastFloor !== maze.floor) {
       for (const [cell, isFloor] of maze.floor.entries()) {
         const x = (cell % COLUMNS) * TILE
@@ -94,16 +101,8 @@ export function createMazePainter(context: CanvasRenderingContext2D) {
       }
     }
 
-    const x = Math.round(player.x)
-    const y = Math.round(player.y)
-    context.fillStyle = '#fff3df'
-    context.fillRect(x - 4, y - 5, 8, 7)
-    context.fillRect(x - 5, y - 3, 10, 3)
-    context.fillRect(x - 3, y + 2, 6, 3)
-    context.fillStyle = '#211524'
-    context.fillRect(x - 3, y - 2, 2, 2)
-    context.fillRect(x + 1, y - 2, 2, 2)
-    context.fillStyle = '#ff3b66'
-    context.fillRect(x - 4, y + 2, 8, 2)
+    if (lastPlayerX !== undefined && lastPlayerX !== player.x) facing = player.x > lastPlayerX ? 1 : -1
+    lastPlayerX = player.x
+    paintPlayer(context, player.x, player.y, facing)
   }
 }

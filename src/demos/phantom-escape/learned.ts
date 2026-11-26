@@ -1,7 +1,8 @@
 import type { PhantomRun } from './engine.ts'
 import { createMoveObservation, MOVE_FIELDS } from './forecast.ts'
 import { ACTIONS, observeHud, TICKS_PER_ACTION } from './observations.ts'
-import { observeVisionMoves } from './vision-spatial.ts'
+import { observeSceneMoves, readVisionScene } from './vision-spatial.ts'
+import { createVisionRecovery } from './vision-recovery.ts'
 import { createVisionPainter } from './vision.ts'
 
 export type LearnedMode = 'state' | 'vision'
@@ -11,6 +12,7 @@ export type LearnedDecision = {
   action: number
   alternatives: { action: number; probability: number }[]
   duration: number
+  recovering: boolean
 }
 
 const LAYERS = [ACTIONS.length * MOVE_FIELDS + 5, 96, 64, ACTIONS.length]
@@ -57,6 +59,7 @@ export function readLearnedActor(asset: { version: number; float32: string }) {
 export function createLearnedController(mode: LearnedMode, actor: ReturnType<typeof readLearnedActor>) {
   const observeState = createMoveObservation()
   const paintVision = createVisionPainter()
+  const recover = createVisionRecovery()
   let untilNext = 0
   let action = 0
   let frame: Uint8Array | undefined
@@ -67,15 +70,17 @@ export function createLearnedController(mode: LearnedMode, actor: ReturnType<typ
         const started = performance.now()
         const hud = observeHud(run)
         frame = mode === 'vision' ? paintVision(run.board) : undefined
-        const moves = frame ? observeVisionMoves(frame, hud[4] === 1) : observeState(run.board)
+        const scene = frame ? readVisionScene(frame) : undefined
+        const moves = scene ? observeSceneMoves(scene, hud[4] === 1) : observeState(run.board)
         const logits = actor([...moves, ...hud])
-        action = logits.reduce((best, score, candidate) => score > logits[best] ? candidate : best, 0)
+        const preferred = logits.reduce((best, score, candidate) => score > logits[best] ? candidate : best, 0)
+        action = scene ? recover(scene, moves, hud, preferred) : preferred
         const duration = performance.now() - started
-        const weights = logits.map(logit => Math.exp(logit - logits[action]))
+        const weights = logits.map(logit => Math.exp(logit - logits[preferred]))
         const total = weights.reduce((sum, weight) => sum + weight, 0)
         const alternatives = Array.from(weights, (weight, id) => ({ action: id, probability: weight / total }))
           .sort((a, b) => b.probability - a.probability).slice(0, 3)
-        decision = { action, alternatives, duration }
+        decision = { action, alternatives, duration, recovering: action !== preferred }
         untilNext = TICKS_PER_ACTION
       }
       untilNext--

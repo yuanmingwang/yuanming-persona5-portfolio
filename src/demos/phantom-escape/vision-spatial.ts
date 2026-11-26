@@ -55,7 +55,10 @@ export function readVisionScene(frame: Uint8Array) {
 }
 
 export function observeVisionMoves(frame: Uint8Array, exiting: boolean) {
-  const { floor, coins, exit, player, enemyPixels } = readVisionScene(frame)
+  return observeSceneMoves(readVisionScene(frame), exiting)
+}
+
+export function observeSceneMoves({ floor, coins, exit, player, enemyPixels }: ReturnType<typeof readVisionScene>, exiting: boolean) {
   if (!Number.isFinite(player.x) || floor[cellAt(player.x, player.y)] !== 1) {
     // The painter puts the player last. This fallback keeps malformed or blank input finite.
     return Array<number>(ACTIONS.length * MOVE_FIELDS).fill(0)

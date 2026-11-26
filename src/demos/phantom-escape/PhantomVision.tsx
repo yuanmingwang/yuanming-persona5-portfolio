@@ -63,6 +63,7 @@ export default function PhantomVision({ mode, intent, learnedDecision, planStats
           <dd>{mode === 'human' ? 'Human' : mode === 'ai' ? intent || 'Waiting' : action}</dd>
         </div>
         {mode === 'vision' && <div><dt>Input size</dt><dd>{VISION_WIDTH} × {VISION_HEIGHT} RGB</dd></div>}
+        {learnedDecision?.recovering && <div><dt>Steering</dt><dd>Unsticking</dd></div>}
         {mode === 'state' && <div><dt>Input</dt><dd>Simulator state</dd></div>}
         {learned && <div><dt>Decision time</dt><dd>{learnedDecision ? `${learnedDecision.duration.toFixed(2)} ms` : '—'}</dd></div>}
         {mode === 'ai' && <>
@@ -78,7 +79,7 @@ export default function PhantomVision({ mode, intent, learnedDecision, planStats
       )}
       {learned && learnedDecision && (
         <section className="phantom-probabilities" aria-labelledby="phantom-probability-title">
-          <h3 id="phantom-probability-title">Top action probabilities</h3>
+          <h3 id="phantom-probability-title">Top model action probabilities</h3>
           <ol>
             {learnedDecision.alternatives.map(({ action: id, probability }) => (
               <li key={id}>
