@@ -141,6 +141,31 @@ values. Vision imitation retains compressed demonstrations and decodes batches
 of 16. Vision PPO uses 64 rollout decisions per environment. SB3 normalizes the
 uint8 pixels before the CNN.
 
+The first RGB-only imitation run cleared zero first levels, averaged 50.5
+points, and plateaued near 27% action agreement on the training demonstrations.
+The spatial-vision profile combines a CNN residual with a compact vector
+extracted from the rendered RGB palette. It recovers visible floor, coins,
+exit, player location and enemy silhouettes, then projects player moves against
+the recovered walls. The proximity estimates use visible enemy positions.
+Only pixels and HUD values feed this profile. To initialize it from the successful
+State PPO checkpoint, copy the navigation normalization and policy/value heads and
+start the RGB residual at zero. That lets the transfer be evaluated before
+attributing any improvement to CNN training.
+
+A first-level-only replay of the saved navigation actor on pixel-derived
+features cleared 122 of 200 seeds, including 82 arenas and 40 room dungeons.
+The same actor using simulator-derived features cleared 161. The pixel replay
+uses the transferred weights with no CNN contribution and provides the
+starting comparison for spatial-vision PPO.
+
+Spatial-vision PPO selected step 0. It cleared 122 of 200 first levels and
+averaged 3,314 points over full evaluation runs. Both browser policies share a
+91 kB serialized actor, loaded only when State PPO or Spatial Vision is selected.
+The browser holds each decision for six ticks and calls the same feature code as
+the training bridge. The exporter checks that both checkpoints have identical
+actor tensors and that the selected vision checkpoint's CNN projection is zero.
+Deploying a checkpoint with a learned CNN projection requires CNN inference.
+
 ## Loading and content lifecycle
 
 - All six local CSVs are imported as raw text and parsed for immediate initial state.
