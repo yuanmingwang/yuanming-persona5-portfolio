@@ -44,3 +44,24 @@ class NavigationFeatures(BaseFeaturesExtractor):
     def forward(self, observations):
         state = torch.cat((observations["moves"], observations["hud"]), dim=1)
         return (state - self.center) / self.scale
+
+
+class VisionFeatures(BaseFeaturesExtractor):
+    def __init__(self, observation_space):
+        super().__init__(observation_space, features_dim=192 + observation_space["hud"].shape[0])
+        channels = observation_space["frames"].shape[0]
+        self.cnn = nn.Sequential(
+            nn.Conv2d(channels, 24, kernel_size=8, stride=4, padding=2),
+            nn.ReLU(),
+            nn.Conv2d(24, 40, kernel_size=4, stride=2, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(40, 48, kernel_size=3, stride=2, padding=1),
+            nn.ReLU(),
+            nn.AdaptiveAvgPool2d((6, 10)),
+            nn.Flatten(),
+            nn.Linear(48 * 6 * 10, 192),
+            nn.ReLU(),
+        )
+
+    def forward(self, observations):
+        return torch.cat((self.cnn(observations["frames"]), observations["hud"]), dim=1)

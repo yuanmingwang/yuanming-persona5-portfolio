@@ -1,8 +1,9 @@
-"""Warm-start State PPO with successful demonstrations from the 10 Hz teacher."""
+"""Warm-start a policy with successful demonstrations from the 10 Hz teacher."""
 
 import numpy as np
 
 from .client import SimulatorClient
+from .frames import VisionFrames
 
 # Keep demonstration maps separate from both evaluation and PPO rollout maps.
 DEMO_FIRST_SEED = 1 << 20
@@ -14,16 +15,21 @@ def collect(episodes, arena_only, features="grid"):
     states, huds, actions = [], [], []
     with SimulatorClient() as simulator:
         spec = simulator.request("spec")
+        vision = VisionFrames(spec) if features == "vision" else None
         key = "moves" if features == "navigation" else "grid"
         shape = (spec["movesSize"],) if key == "moves" else spec["gridShape"]
         for index in range(episodes):
             seed = DEMO_FIRST_SEED + (2 * index + 1 if arena_only else index)
             result = simulator.request("reset", seed=seed, features=features)
             demo_states, demo_huds, demo_actions = [], [], []
-            for _ in range(MAX_DEMO_STEPS):
+            for step in range(MAX_DEMO_STEPS):
                 current = result["observation"]
+                if vision:
+                    frames = vision.append(current["frame"], result["info"]["level"], reset=step == 0)
+                    demo_states.append(frames)
+                else:
+                    demo_states.append(np.asarray(current[key], dtype=np.float16).reshape(shape))
                 result = simulator.request("expert")
-                demo_states.append(np.asarray(current[key], dtype=np.float16).reshape(shape))
                 demo_huds.append(current["hud"])
                 demo_actions.append(result["action"])
                 if result["info"]["level"] > 1:
@@ -35,7 +41,7 @@ def collect(episodes, arena_only, features="grid"):
                     break
     if not actions:
         raise RuntimeError("No teacher demonstrations cleared level one")
-    return np.stack(states), np.asarray(huds, dtype=np.float32), np.asarray(actions, dtype=np.int64)
+    return states if vision else np.stack(states), np.asarray(huds, dtype=np.float32), np.asarray(actions, dtype=np.int64)
 
 
 def warm_start(model, episodes, epochs, seed, arena_only, features="grid"):
@@ -43,7 +49,13 @@ def warm_start(model, episodes, epochs, seed, arena_only, features="grid"):
     from torch.nn import functional as F
 
     states, huds, actions = collect(episodes, arena_only, features)
-    key = "moves" if features == "navigation" else "grid"
+    key = {"grid": "grid", "navigation": "moves", "vision": "frames"}[features]
+    vision = None
+    batch_size = BATCH_SIZE
+    if features == "vision":
+        with SimulatorClient() as simulator:
+            vision = VisionFrames(simulator.request("spec"))
+        batch_size = 16
     if features == "navigation":
         model.policy.features_extractor.normalize_from(states, huds)
     rng = np.random.default_rng(seed)
@@ -55,10 +67,15 @@ def warm_start(model, episodes, epochs, seed, arena_only, features="grid"):
         hits = 0
         loss_total = 0.0
         order = rng.permutation(len(actions))
-        for start in range(0, len(actions), BATCH_SIZE):
-            batch = order[start:start + BATCH_SIZE]
+        for start in range(0, len(actions), batch_size):
+            batch = order[start:start + batch_size]
+            if vision:
+                pixels = np.stack([vision.decode(states[index]) for index in batch])
+                inputs = torch.as_tensor(pixels, device=model.device)
+            else:
+                inputs = torch.as_tensor(states[batch], device=model.device, dtype=torch.float32)
             observations = {
-                key: torch.as_tensor(states[batch], device=model.device, dtype=torch.float32),
+                key: inputs,
                 "hud": torch.as_tensor(huds[batch], device=model.device),
             }
             labels = torch.as_tensor(actions[batch], device=model.device)

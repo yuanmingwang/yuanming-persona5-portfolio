@@ -48,6 +48,24 @@ class TestReplay(unittest.TestCase):
 
 @unittest.skipUnless(importlib.util.find_spec("gymnasium"), "Gymnasium is not installed")
 class TestGymnasium(unittest.TestCase):
+    def test_vision_stack_uses_latest_pixels_and_reset_clears_history(self):
+        import numpy as np
+        from gymnasium.utils.env_checker import check_env
+        from scripts.phantom_escape.env import PhantomEscapeEnv
+
+        with PhantomEscapeEnv(features="vision") as env:
+            check_env(env, skip_render_check=True)
+            initial, info = env.reset(seed=5301)
+            self.assertEqual(initial["frames"].shape, (12, 192, 320))
+            self.assertEqual(initial["frames"].dtype, np.uint8)
+            np.testing.assert_array_equal(initial["frames"][:3], initial["frames"][9:])
+            next_observation, _, _, _, _ = env.step(3)
+            np.testing.assert_array_equal(next_observation["frames"][:-3], initial["frames"][3:])
+            self.assertFalse(np.array_equal(next_observation["frames"][9:], initial["frames"][9:]))
+            replay, replay_info = env.reset(seed=5301)
+            self.assertEqual(info, replay_info)
+            np.testing.assert_array_equal(replay["frames"], initial["frames"])
+
     def test_room_focus_keeps_both_starting_layouts(self):
         from collections import Counter
         from scripts.phantom_escape.env import PhantomEscapeEnv, TrainingMaps

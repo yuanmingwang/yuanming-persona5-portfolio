@@ -128,6 +128,19 @@ balanced validation seeds starting at 8000. It prioritizes first-level clear
 rate, then dungeon clear rate and mean score. The final 200-seed benchmark
 continues to start at seed 5300 and plays full runs.
 
+The selected State PPO checkpoint at 150,528 steps cleared 161 of 200 first
+levels (98 arenas and 63 room dungeons) and averaged 5,129.5 points.
+
+The vision profile uses the browser-compatible renderer in
+`src/demos/phantom-escape/vision.ts`. It draws a clean RGB game view with walls,
+coins, exit state, player and enemy types. It leaves out tactical overlays.
+The bridge transfers one compressed 320×192 RGB frame per action. Python builds
+a channel-first `12 × 192 × 320` stack, oldest frame first, and repeats the new
+scene at reset or a level change. The model receives this stack and the five HUD
+values. Vision imitation retains compressed demonstrations and decodes batches
+of 16. Vision PPO uses 64 rollout decisions per environment. SB3 normalizes the
+uint8 pixels before the CNN.
+
 ## Loading and content lifecycle
 
 - All six local CSVs are imported as raw text and parsed for immediate initial state.

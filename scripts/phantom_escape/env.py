@@ -5,6 +5,7 @@ from gymnasium.utils.seeding import np_random
 import numpy as np
 
 from .client import SimulatorClient
+from .frames import VisionFrames
 
 
 class PhantomEscapeEnv(gym.Env):
@@ -17,7 +18,7 @@ class PhantomEscapeEnv(gym.Env):
         if max_steps is not None and (not isinstance(max_steps, int) or max_steps < 1):
             raise ValueError("max_steps must be a positive integer")
         self.max_steps = max_steps
-        if features not in ("grid", "navigation"):
+        if features not in ("grid", "navigation", "vision"):
             raise ValueError("Unknown Phantom Escape observation profile")
         self.features = features
         self.render_mode = None
@@ -30,18 +31,26 @@ class PhantomEscapeEnv(gym.Env):
                 raise RuntimeError("Unsupported Phantom Escape simulator contract")
             self._grid_shape = tuple(spec["gridShape"])
             self.action_space = gym.spaces.Discrete(spec["actionCount"])
-            key = "moves" if features == "navigation" else "grid"
-            shape = (spec["movesSize"],) if features == "navigation" else self._grid_shape
+            if features == "vision":
+                self._vision = VisionFrames(spec)
+                state = {"frames": gym.spaces.Box(0, 255, shape=self._vision.shape, dtype=np.uint8)}
+            elif features == "navigation":
+                state = {"moves": gym.spaces.Box(-1.0, 1.0, shape=(spec["movesSize"],), dtype=np.float32)}
+            else:
+                state = {"grid": gym.spaces.Box(-1.0, 1.0, shape=self._grid_shape, dtype=np.float32)}
             self.observation_space = gym.spaces.Dict({
-                key: gym.spaces.Box(-1.0, 1.0, shape=shape, dtype=np.float32),
+                **state,
                 "hud": gym.spaces.Box(0.0, 1.0, shape=(spec["hudSize"],), dtype=np.float32),
             })
         except Exception:
             self.close()
             raise
 
-    def _observation(self, response):
+    def _observation(self, response, *, reset=False):
         raw = response["observation"]
+        if self.features == "vision":
+            frames = self._vision.append(raw["frame"], response["info"]["level"], reset=reset)
+            return {"frames": self._vision.decode(frames), "hud": np.asarray(raw["hud"], dtype=np.float32)}
         observation = {key: np.asarray(value, dtype=np.float32) for key, value in raw.items()}
         if self.features == "grid":
             observation["grid"] = observation["grid"].reshape(self._grid_shape)
@@ -60,7 +69,7 @@ class PhantomEscapeEnv(gym.Env):
         response = self._client.request("reset", seed=int(run_seed), features=self.features)
         self._steps = 0
         self._needs_reset = False
-        return self._observation(response), response["info"]
+        return self._observation(response, reset=True), response["info"]
 
     def step(self, action):
         if self._needs_reset:

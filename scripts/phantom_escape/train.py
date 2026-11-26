@@ -1,4 +1,4 @@
-"""Train or evaluate a State PPO policy for Phantom Escape."""
+"""Train or evaluate a State or Vision PPO policy for Phantom Escape."""
 
 import argparse
 from datetime import datetime, timezone
@@ -15,7 +15,7 @@ import torch
 
 from .env import PhantomEscapeEnv, TrainingMaps
 from .evaluation import EVAL_SEED_COUNT, MAX_EPISODE_STEPS, checkpoint_features, evaluate
-from .policy import NavigationFeatures, StateFeatures
+from .policy import NavigationFeatures, StateFeatures, VisionFeatures
 from .selection import SelectCheckpoint
 
 ROLLOUT_STEPS = 256
@@ -36,7 +36,7 @@ def main():
     parser.add_argument("--learning-rate", type=float, help="override the PPO learning rate")
     parser.add_argument("--select-every", type=int, default=0, help="enable checkpoint selection at this step interval")
     parser.add_argument("--validation-episodes", type=int, default=40, help="even number of validation seeds")
-    parser.add_argument("--features", choices=("grid", "navigation"), help="observation profile for a fresh policy")
+    parser.add_argument("--features", choices=("grid", "navigation", "vision"), help="observation profile for a fresh policy")
     parser.add_argument("--imitation-episodes", type=int, default=0, help="attempt this many teacher demonstrations")
     parser.add_argument("--imitation-epochs", type=int, default=12)
     parser.add_argument("--output", type=Path, help="new directory for model and logs")
@@ -93,15 +93,17 @@ def main():
                 policy = PPO.load(args.resume, env=vec, device=args.device, seed=args.seed, **overrides)
             vec.seed(args.seed)
         else:
-            navigation = features == "navigation"
-            layers = [96, 64] if navigation else [64]
+            vision = features == "vision"
+            extractors = {"grid": StateFeatures, "navigation": NavigationFeatures, "vision": VisionFeatures}
+            layers = [96, 64] if features == "navigation" else [64]
             policy_kwargs = {
-                "features_extractor_class": NavigationFeatures if navigation else StateFeatures,
-                "normalize_images": False, "net_arch": {"pi": layers, "vf": layers},
+                "features_extractor_class": extractors[features],
+                "normalize_images": vision, "net_arch": {"pi": layers, "vf": layers},
             }
             policy = PPO(
                 "MultiInputPolicy", vec, device=args.device, seed=args.seed,
-                n_steps=ROLLOUT_STEPS, batch_size=128, learning_rate=args.learning_rate or 3e-4,
+                n_steps=64 if vision else ROLLOUT_STEPS, batch_size=16 if vision else 128,
+                n_epochs=4 if vision else 10, learning_rate=args.learning_rate or 3e-4,
                 gamma=.995, gae_lambda=.95, ent_coef=.01,
                 policy_kwargs=policy_kwargs,
             )
@@ -116,7 +118,7 @@ def main():
             policy.save(output / "imitation")
         checkpoint = CheckpointCallback(
             save_freq=max(50_000 // args.envs, 1), save_path=str(output / "checkpoints"),
-            name_prefix="state_ppo",
+            name_prefix="vision_ppo" if features == "vision" else "state_ppo",
         )
         try:
             if args.steps:
@@ -131,7 +133,7 @@ def main():
             print(f"Saved interrupted checkpoint to {output / 'interrupted.zip'}")
             return
         if args.steps:
-            policy.save(output / "state_ppo")
+            policy.save(output / ("vision_ppo" if features == "vision" else "state_ppo"))
     finally:
         vec.close()
 

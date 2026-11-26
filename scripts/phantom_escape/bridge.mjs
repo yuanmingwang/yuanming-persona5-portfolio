@@ -1,19 +1,25 @@
 import { createInterface } from 'node:readline'
+import { deflateRawSync } from 'node:zlib'
 import { createRun } from '../../src/demos/phantom-escape/engine.ts'
+import { createVisionPainter, VISION_HEIGHT, VISION_HISTORY, VISION_WIDTH } from '../../src/demos/phantom-escape/vision.ts'
 import { advance, describe, observe, observeHud, spec } from './simulation.ts'
 import { createTeacher } from './teacher.ts'
 import { createMoveObservation, MOVE_FIELDS } from './forecast.ts'
 
 let run
 let teacher
-let navigation = false
+let features
 const observeMoves = createMoveObservation()
+const paintVision = createVisionPainter()
 const lines = createInterface({ input: process.stdin, crlfDelay: Infinity })
 for await (const line of lines) {
   try {
     const message = JSON.parse(line)
     if (message.command === 'spec') {
-      process.stdout.write(JSON.stringify({ ...spec, movesSize: spec.actionCount * MOVE_FIELDS }) + '\n')
+      process.stdout.write(JSON.stringify({
+        ...spec, movesSize: spec.actionCount * MOVE_FIELDS,
+        visionShape: [VISION_HEIGHT, VISION_WIDTH, 3], visionHistory: VISION_HISTORY,
+      }) + '\n')
       continue
     }
     let transition
@@ -22,9 +28,11 @@ for await (const line of lines) {
       if (!Number.isInteger(message.seed) || message.seed < 0 || message.seed > 0xffffffff) {
         throw new RangeError('Expected an unsigned 32-bit seed')
       }
+      const profile = message.features ?? 'grid'
+      if (!['grid', 'navigation', 'vision'].includes(profile)) throw new RangeError('Unknown observation profile')
       run = createRun(message.seed)
       teacher = undefined
-      navigation = message.features === 'navigation'
+      features = profile
     } else if (message.command === 'step' || message.command === 'expert') {
       if (!run) throw new Error('Reset the episode before stepping')
       if (message.command === 'expert') {
@@ -39,8 +47,11 @@ for await (const line of lines) {
     } else {
       throw new Error('Unknown simulator command')
     }
+    const observation = features === 'vision'
+      ? { frame: deflateRawSync(paintVision(run.board), { level: 1 }).toString('base64'), hud: observeHud(run) }
+      : features === 'navigation' ? { moves: observeMoves(run.board), hud: observeHud(run) } : observe(run)
     process.stdout.write(JSON.stringify({
-      observation: navigation ? { moves: observeMoves(run.board), hud: observeHud(run) } : observe(run),
+      observation,
       info: describe(run), transition,
       ...(message.command === 'expert' ? { action } : {}),
     }) + '\n')

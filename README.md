@@ -132,6 +132,28 @@ validation set. The final report in `evaluation.json` evaluates
 `best_validation.zip` on the original 200 seeds. `validation.jsonl` records
 the comparison and `state_ppo.zip` contains the final PPO weights.
 
+Vision training starts a fresh CNN using four 320×192 RGB frames and the same
+HUD and nine actions. Run one short check of both imitation and PPO:
+
+```sh
+.venv/bin/python -m scripts.phantom_escape.train --features vision --stage mixed \
+  --imitation-episodes 4 --imitation-epochs 1 --steps 128 --envs 2 \
+  --eval-episodes 0 --output training-output/phantom-escape/vision-smoke
+```
+
+Then train and evaluate an imitation checkpoint before committing to a longer
+Vision PPO run:
+
+```sh
+.venv/bin/python -m scripts.phantom_escape.train --features vision --stage mixed \
+  --imitation-episodes 64 --imitation-epochs 12 --steps 0 --envs 2 \
+  --eval-episodes 200 --output training-output/phantom-escape/vision-first
+```
+
+The first command writes `imitation.zip` and `vision_ppo.zip`. The second writes
+`imitation.zip` and `evaluation.json`, with clear counts for both starting
+layouts. The room-focused State PPO checkpoint is the learned-state benchmark.
+
 Each CSV is separate: editing the résumé does not automatically update About, Journey, Questions, or the original Google Doc. Local edits appear during development; updating the deployed site requires a new deployment.
 
 To attach a PDF to a résumé project, save it in `public/documents/project-papers/` using the project's CSV ID with hyphens replaced by underscores. Add the original ID and the PDF page count to `src/content/resumePapers.ts`. The site uses the same IDs for local and published résumé entries.
