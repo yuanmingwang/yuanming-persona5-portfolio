@@ -117,9 +117,20 @@ This command trains imitation only and evaluates the saved `imitation.zip`:
   --output training-output/phantom-escape/navigation-first
 ```
 
-If that checkpoint beats random and clears first levels, start a separate PPO
-fine-tuning run with `--resume training-output/phantom-escape/navigation-first/imitation.zip --stage mixed`.
-Keep both checkpoints and compare their held-out clear rates and mean scores.
+To fine-tune that checkpoint, use a room-heavy curriculum and checkpoint selection:
+
+```sh
+.venv/bin/python -m scripts.phantom_escape.train \
+  --resume training-output/phantom-escape/navigation-first/imitation.zip \
+  --stage room-focus --steps 200000 --learning-rate 0.0001 \
+  --select-every 50000 --validation-episodes 40 --eval-episodes 200 \
+  --output training-output/phantom-escape/navigation-room-ppo
+```
+
+The selector compares the starting checkpoint with PPO checkpoints on a balanced
+validation set. The final report in `evaluation.json` evaluates
+`best_validation.zip` on the original 200 seeds. `validation.jsonl` records
+the comparison and `state_ppo.zip` contains the final PPO weights.
 
 Each CSV is separate: editing the résumé does not automatically update About, Journey, Questions, or the original Google Doc. Local edits appear during development; updating the deployed site requires a new deployment.
 

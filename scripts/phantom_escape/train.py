@@ -1,73 +1,29 @@
 """Train or evaluate a State PPO policy for Phantom Escape."""
 
 import argparse
-from collections import Counter
 from datetime import datetime, timezone
 from functools import partial
 import json
 from pathlib import Path
-from statistics import mean
 
 from stable_baselines3 import PPO
-from stable_baselines3.common.callbacks import CheckpointCallback
+from stable_baselines3.common.callbacks import CallbackList, CheckpointCallback
 from stable_baselines3.common.logger import configure
 from stable_baselines3.common.monitor import Monitor
 from stable_baselines3.common.vec_env import DummyVecEnv
 import torch
 
 from .env import PhantomEscapeEnv, TrainingMaps
+from .evaluation import EVAL_SEED_COUNT, MAX_EPISODE_STEPS, checkpoint_features, evaluate
 from .policy import NavigationFeatures, StateFeatures
+from .selection import SelectCheckpoint
 
-EVAL_FIRST_SEED = 5300
-EVAL_SEED_COUNT = 200
-MAX_EPISODE_STEPS = 1200
 ROLLOUT_STEPS = 256
 
 
-def make_training_env(arena_only, features):
-    return Monitor(TrainingMaps(PhantomEscapeEnv(max_steps=MAX_EPISODE_STEPS, features=features), arena_only))
-
-
-def checkpoint_features(policy):
-    return "navigation" if "moves" in policy.observation_space.spaces else "grid"
-
-
-def evaluate(policy, episodes):
-    outcomes = Counter()
-    layout_results = {}
-    returns, levels, scores = [], [], []
-    env = PhantomEscapeEnv(max_steps=MAX_EPISODE_STEPS, features=checkpoint_features(policy))
-    try:
-        for seed in range(EVAL_FIRST_SEED, EVAL_FIRST_SEED + episodes):
-            observation, info = env.reset(seed=seed)
-            layout = layout_results.setdefault(info["layout"], {"episodes": 0, "first_level_clears": 0})
-            total_reward = 0.0
-            while True:
-                action, _ = policy.predict(observation, deterministic=True)
-                observation, reward, terminated, truncated, info = env.step(action.item())
-                total_reward += reward
-                if terminated or truncated:
-                    outcomes[info["outcome"] or "step_limit"] += 1
-                    break
-            returns.append(total_reward)
-            scores.append(info["score"])
-            levels.append(info["level"] - 1)
-            layout["episodes"] += 1
-            layout["first_level_clears"] += int(info["level"] > 1)
-    finally:
-        env.close()
-
-    return {
-        "episodes": episodes,
-        "first_seed": EVAL_FIRST_SEED,
-        "max_steps": MAX_EPISODE_STEPS,
-        "mean_return": mean(returns),
-        "mean_levels_cleared": mean(levels),
-        "first_level_clear_rate": mean(level > 0 for level in levels),
-        "mean_score": mean(scores),
-        "outcomes": dict(outcomes),
-        "starting_layouts": layout_results,
-    }
+def make_training_env(stage, features):
+    env = PhantomEscapeEnv(max_steps=MAX_EPISODE_STEPS, features=features)
+    return Monitor(TrainingMaps(env, arena_only=stage == "arena", room_focus=stage == "room-focus"))
 
 
 def main():
@@ -76,7 +32,10 @@ def main():
     parser.add_argument("--envs", type=int, default=4)
     parser.add_argument("--seed", type=int, default=2026)
     parser.add_argument("--device", choices=("auto", "cpu", "cuda"), default="auto")
-    parser.add_argument("--stage", choices=("arena", "mixed"), default="arena")
+    parser.add_argument("--stage", choices=("arena", "mixed", "room-focus"), default="arena")
+    parser.add_argument("--learning-rate", type=float, help="override the PPO learning rate")
+    parser.add_argument("--select-every", type=int, default=0, help="enable checkpoint selection at this step interval")
+    parser.add_argument("--validation-episodes", type=int, default=40, help="even number of validation seeds")
     parser.add_argument("--features", choices=("grid", "navigation"), help="observation profile for a fresh policy")
     parser.add_argument("--imitation-episodes", type=int, default=0, help="attempt this many teacher demonstrations")
     parser.add_argument("--imitation-epochs", type=int, default=12)
@@ -90,6 +49,12 @@ def main():
         parser.error("steps must be nonnegative, envs must be positive, and seeds must fit uint32")
     if args.imitation_episodes < 0 or args.imitation_epochs < 1:
         parser.error("imitation episodes must be nonnegative and imitation epochs must be positive")
+    if args.learning_rate is not None and not 0 < args.learning_rate <= 1:
+        parser.error("--learning-rate must be greater than 0 and at most 1")
+    if args.select_every < 0 or (args.select_every and (not args.steps or args.evaluate)):
+        parser.error("--select-every requires PPO training and a positive interval")
+    if args.select_every and not (2 <= args.validation_episodes <= 200 and args.validation_episodes % 2 == 0):
+        parser.error("--validation-episodes must be even and between 2 and 200")
     if args.imitation_episodes and (args.resume or args.evaluate):
         parser.error("imitation requires a new model")
     if args.features and (args.resume or args.evaluate):
@@ -114,16 +79,18 @@ def main():
         output.mkdir(parents=True, exist_ok=False)
     except FileExistsError:
         parser.error(f"output already exists: {output}. Choose a new directory.")
-    loaded = PPO.load(args.resume, device=args.device, seed=args.seed) if args.resume else None
+    overrides = {"learning_rate": args.learning_rate} if args.learning_rate is not None else {}
+    loaded = PPO.load(args.resume, device=args.device, seed=args.seed, **overrides) if args.resume else None
     features = checkpoint_features(loaded) if loaded else args.features or "grid"
-    vec = DummyVecEnv([partial(make_training_env, args.stage == "arena", features) for _ in range(args.envs)])
+    vec = DummyVecEnv([partial(make_training_env, args.stage, features) for _ in range(args.envs)])
+    selector = SelectCheckpoint(output, args.select_every, args.validation_episodes) if args.select_every else None
     try:
         if loaded:
             if loaded.n_envs == vec.num_envs:
                 policy = loaded
                 policy.set_env(vec)
             else:
-                policy = PPO.load(args.resume, env=vec, device=args.device, seed=args.seed)
+                policy = PPO.load(args.resume, env=vec, device=args.device, seed=args.seed, **overrides)
             vec.seed(args.seed)
         else:
             navigation = features == "navigation"
@@ -134,7 +101,7 @@ def main():
             }
             policy = PPO(
                 "MultiInputPolicy", vec, device=args.device, seed=args.seed,
-                n_steps=ROLLOUT_STEPS, batch_size=128, learning_rate=3e-4,
+                n_steps=ROLLOUT_STEPS, batch_size=128, learning_rate=args.learning_rate or 3e-4,
                 gamma=.995, gae_lambda=.95, ent_coef=.01,
                 policy_kwargs=policy_kwargs,
             )
@@ -153,7 +120,12 @@ def main():
         )
         try:
             if args.steps:
-                policy.learn(total_timesteps=args.steps, callback=checkpoint, reset_num_timesteps=not args.resume)
+                if selector:
+                    selector.compare(policy)
+                callbacks = CallbackList([checkpoint, selector]) if selector else checkpoint
+                policy.learn(total_timesteps=args.steps, callback=callbacks, reset_num_timesteps=not args.resume)
+                if selector:
+                    selector.compare(policy)
         except KeyboardInterrupt:
             policy.save(output / "interrupted")
             print(f"Saved interrupted checkpoint to {output / 'interrupted.zip'}")
@@ -164,7 +136,12 @@ def main():
         vec.close()
 
     if args.eval_episodes:
-        metrics = json.dumps(evaluate(policy, args.eval_episodes), indent=2)
+        if selector:
+            policy = PPO.load(output / "best_validation.zip", device=args.device)
+        result = evaluate(policy, args.eval_episodes)
+        if selector:
+            result.update(checkpoint="best_validation.zip", selected_step=selector.best_step)
+        metrics = json.dumps(result, indent=2)
         (output / "evaluation.json").write_text(metrics + "\n", encoding="utf-8")
         print(metrics)
 

@@ -85,9 +85,10 @@ class PhantomEscapeEnv(gym.Env):
 class TrainingMaps(gym.Wrapper):
     """Sample deterministic training seeds outside the evaluation range."""
 
-    def __init__(self, environment, arena_only):
+    def __init__(self, environment, arena_only=False, *, room_focus=False):
         super().__init__(environment)
         self.arena_only = arena_only
+        self.room_focus = room_focus
         self._map_rng = None
 
     def reset(self, *, seed=None, options=None):
@@ -97,4 +98,6 @@ class TrainingMaps(gym.Wrapper):
         # Odd seeds start in an open arena. Subsequent levels use the arcade schedule.
         if self.arena_only:
             run_seed |= 1
+        elif self.room_focus:
+            run_seed = (run_seed & ~1) | int(self._map_rng.integers(4) == 0)
         return self.env.reset(seed=seed, options={**(options or {}), "run_seed": run_seed})

@@ -120,6 +120,14 @@ and do not change live state, rewards, or action timing. The profile does not
 include the teacher's recommended action or route. Grid checkpoints retain their
 original input format.
 
+Navigation imitation cleared 118 of 200 first levels (95 arenas and 23 room
+dungeons), with an average arcade score of 2,371. Room-focused PPO samples about
+75% room starts and leaves the regular subsequent-level rotation in place.
+Checkpoint selection compares the starting policy and trained snapshots on
+balanced validation seeds starting at 8000. It prioritizes first-level clear
+rate, then dungeon clear rate and mean score. The final 200-seed benchmark
+continues to start at seed 5300 and plays full runs.
+
 ## Loading and content lifecycle
 
 - All six local CSVs are imported as raw text and parsed for immediate initial state.

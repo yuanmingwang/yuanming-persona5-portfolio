@@ -48,6 +48,40 @@ class TestReplay(unittest.TestCase):
 
 @unittest.skipUnless(importlib.util.find_spec("gymnasium"), "Gymnasium is not installed")
 class TestGymnasium(unittest.TestCase):
+    def test_room_focus_keeps_both_starting_layouts(self):
+        from collections import Counter
+        from scripts.phantom_escape.env import PhantomEscapeEnv, TrainingMaps
+
+        with TrainingMaps(PhantomEscapeEnv(features="navigation"), room_focus=True) as env:
+            _, first = env.reset(seed=2026)
+            counts = Counter(env.reset()[1]["layout"] for _ in range(120))
+            self.assertEqual(env.reset(seed=2026)[1], first)
+        self.assertGreater(counts["rooms"], counts["arena"])
+        self.assertGreater(counts["arena"], 0)
+
+    def test_first_level_validation_tracks_both_layouts(self):
+        from types import SimpleNamespace
+        import numpy as np
+        from scripts.phantom_escape.evaluation import VALIDATION_FIRST_SEED, evaluate, selection_key
+
+        class IdlePolicy:
+            observation_space = SimpleNamespace(spaces={"moves": None})
+
+            def predict(self, observation, deterministic):
+                self_shape = observation["moves"].shape
+                if self_shape != (99,) or not deterministic:
+                    raise AssertionError("Expected deterministic navigation observations")
+                return np.array(0), None
+
+        metrics = evaluate(IdlePolicy(), 2, first_seed=VALIDATION_FIRST_SEED, first_level_only=True)
+        self.assertEqual(metrics["max_steps"], 600)
+        self.assertEqual(sum(metrics["outcomes"].values()), 2)
+        self.assertEqual(metrics["starting_layouts"], {
+            "rooms": {"episodes": 1, "first_level_clears": 0},
+            "arena": {"episodes": 1, "first_level_clears": 0},
+        })
+        self.assertEqual(selection_key(metrics)[:2], (0, 0))
+
     def test_navigation_observations_match_arcade_replay(self):
         from gymnasium.utils.env_checker import check_env
         from scripts.phantom_escape.env import PhantomEscapeEnv
