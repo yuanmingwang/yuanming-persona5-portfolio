@@ -63,7 +63,9 @@ export default function PhantomVision({ mode, intent, learnedDecision, planStats
           <dd>{mode === 'human' ? 'Human' : mode === 'ai' ? intent || 'Waiting' : action}</dd>
         </div>
         {mode === 'vision' && <div><dt>Input size</dt><dd>{VISION_WIDTH} × {VISION_HEIGHT} RGB</dd></div>}
-        {learnedDecision?.recovering && <div><dt>Steering</dt><dd>Unsticking</dd></div>}
+        {learnedDecision?.avoidingEnemy
+          ? <div><dt>Steering</dt><dd>Avoiding phantom</dd></div>
+          : learnedDecision?.recovering && <div><dt>Steering</dt><dd>Unsticking</dd></div>}
         {mode === 'state' && <div><dt>Input</dt><dd>Simulator state</dd></div>}
         {learned && <div><dt>Decision time</dt><dd>{learnedDecision ? `${learnedDecision.duration.toFixed(2)} ms` : '—'}</dd></div>}
         {mode === 'ai' && <>
@@ -100,7 +102,7 @@ export default function PhantomVision({ mode, intent, learnedDecision, planStats
           {showPlan && <span>Teal path · blue explored tiles · red danger</span>}
         </div>
       )}
-      {mode === 'vision' && <p className="dino-model-note">Spatial Vision reads the current RGB frame and HUD.</p>}
+      {mode === 'vision' && <p className="dino-model-note">Spatial Vision reads RGB frames and the HUD. It compares consecutive frames to anticipate nearby phantoms.</p>}
       {mode === 'human' && <p className="dino-model-note">Choose an AI mode to see its decisions.</p>}
     </aside>
   )

@@ -5,6 +5,7 @@ import { centerOf, COLUMNS, HEIGHT, TILE, WIDTH } from './map.ts'
 export const VISION_WIDTH = WIDTH / 2
 export const VISION_HEIGHT = HEIGHT / 2
 export const VISION_HISTORY = 4
+export const VISION_ACTOR_RADIUS = 3
 
 type Color = readonly [number, number, number]
 export const VISION_COLORS = {
@@ -46,8 +47,8 @@ export function createVisionPainter() {
     const frame = terrain.slice()
     marker(frame, centerOf(exit), 3, coinsCollected(board) >= board.quota ? VISION_COLORS.exit : VISION_COLORS.locked)
     for (const coin of board.coins) marker(frame, centerOf(coin), 2, VISION_COLORS.coin)
-    for (const enemy of board.enemies) marker(frame, enemy, 3, VISION_COLORS[enemy.kind])
-    marker(frame, board.player, 3, VISION_COLORS.player)
+    for (const enemy of board.enemies) marker(frame, enemy, VISION_ACTOR_RADIUS, VISION_COLORS[enemy.kind])
+    marker(frame, board.player, VISION_ACTOR_RADIUS, VISION_COLORS.player)
     return frame
   }
 }

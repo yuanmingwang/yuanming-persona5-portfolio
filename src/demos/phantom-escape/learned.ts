@@ -1,5 +1,7 @@
+import { HIT_DISTANCE, PLAYER_STEP } from './engine.ts'
 import type { PhantomRun } from './engine.ts'
 import { createMoveObservation, MOVE_FIELDS } from './forecast.ts'
+import { levelRules } from './map.ts'
 import { ACTIONS, observeHud, TICKS_PER_ACTION } from './observations.ts'
 import { observeSceneMoves, readVisionScene } from './vision-spatial.ts'
 import { createVisionRecovery } from './vision-recovery.ts'
@@ -13,9 +15,21 @@ export type LearnedDecision = {
   alternatives: { action: number; probability: number }[]
   duration: number
   recovering: boolean
+  avoidingEnemy: boolean
 }
 
 const LAYERS = [ACTIONS.length * MOVE_FIELDS + 5, 96, 64, ACTIONS.length]
+
+function avoidCollision(action: number, clearance: readonly number[], logits: Float32Array) {
+  if (!(clearance[action] <= HIT_DISTANCE)) return action
+  // Prefer the model's best safe action. If all actions are risky, maximize clearance.
+  return clearance.reduce((best, distance, candidate) => {
+    if (distance > HIT_DISTANCE) {
+      return clearance[best] <= HIT_DISTANCE || logits[candidate] > logits[best] ? candidate : best
+    }
+    return clearance[best] <= HIT_DISTANCE && distance > clearance[best] ? candidate : best
+  }, action)
+}
 
 export function readLearnedActor(asset: { version: number; float32: string }) {
   if (asset.version !== 1) throw new Error('Unsupported Phantom Escape model format')
@@ -63,6 +77,8 @@ export function createLearnedController(mode: LearnedMode, actor: ReturnType<typ
   let untilNext = 0
   let action = 0
   let frame: Uint8Array | undefined
+  let previousScene: ReturnType<typeof readVisionScene> | undefined
+  let previousLevel = 0
   let decision: LearnedDecision | undefined
   return {
     movement(run: PhantomRun) {
@@ -71,16 +87,24 @@ export function createLearnedController(mode: LearnedMode, actor: ReturnType<typ
         const hud = observeHud(run)
         frame = mode === 'vision' ? paintVision(run.board) : undefined
         const scene = frame ? readVisionScene(frame) : undefined
-        const moves = scene ? observeSceneMoves(scene, hud[4] === 1) : observeState(run.board)
+        const clearance: number[] = []
+        const moves = scene ? observeSceneMoves(scene, hud[4] === 1, {
+          enemyStep: PLAYER_STEP * levelRules(run.level).enemySpeed,
+          previousEnemies: run.level === previousLevel ? previousScene?.enemies ?? [] : [],
+          clearance,
+        }) : observeState(run.board)
+        previousScene = scene
+        previousLevel = run.level
         const logits = actor([...moves, ...hud])
         const preferred = logits.reduce((best, score, candidate) => score > logits[best] ? candidate : best, 0)
-        action = scene ? recover(scene, moves, hud, preferred) : preferred
+        const planned = scene ? recover(scene, moves, hud, preferred) : preferred
+        action = avoidCollision(planned, clearance, logits)
         const duration = performance.now() - started
         const weights = logits.map(logit => Math.exp(logit - logits[preferred]))
         const total = weights.reduce((sum, weight) => sum + weight, 0)
         const alternatives = Array.from(weights, (weight, id) => ({ action: id, probability: weight / total }))
           .sort((a, b) => b.probability - a.probability).slice(0, 3)
-        decision = { action, alternatives, duration, recovering: action !== preferred }
+        decision = { action, alternatives, duration, recovering: planned !== preferred, avoidingEnemy: action !== planned }
         untilNext = TICKS_PER_ACTION
       }
       untilNext--

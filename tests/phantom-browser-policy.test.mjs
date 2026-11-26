@@ -59,6 +59,19 @@ test('Spatial Vision breaks the corridor loop on seed 5410 and reaches the next 
   assert.equal(run.level, 2)
 })
 
+test('Spatial Vision avoids moving phantoms and clears level 3 on seed 1794247485', () => {
+  const run = createRun(1794247485)
+  const controller = createLearnedController('vision', actor)
+  let avoidedOnLevelThree = false
+  while (!run.ended && run.level <= 3) {
+    const movement = controller.movement(run)
+    if (run.level === 3) avoidedOnLevelThree ||= controller.decision.avoidingEnemy
+    stepRun(run, movement)
+  }
+  assert.equal(avoidedOnLevelThree, true)
+  assert.equal(run.level, 4)
+})
+
 test('vision recovery drops its history when it sees a new level', () => {
   const scene = readVisionScene(createVisionPainter()(createRun(5301).board))
   const recovery = createVisionRecovery()

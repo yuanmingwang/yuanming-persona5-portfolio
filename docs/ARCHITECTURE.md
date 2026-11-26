@@ -168,9 +168,11 @@ Deploying a checkpoint with a learned CNN projection requires CNN inference.
 
 In the arcade, Spatial Vision can override a repeated local loop with a
 short route based on the visible floor, objectives, and enemy silhouettes.
-The inspector shows when recovery overrides the learned action and continues
-to display the original model probabilities. State PPO and checkpoint
-evaluation continue to use the learned action directly.
+It also compares consecutive RGB frames to estimate enemy movement and avoid
+collisions during the six ticks for which each action is held. The inspector
+shows when recovery or collision avoidance changes the selected action and
+continues to display the original model probabilities. State PPO and
+checkpoint evaluation continue to use the learned action directly.
 On the same 200 first-level seeds, recovery increased clears from 122 to 132
 and reduced timeouts from 14 to zero.
 
