@@ -11,7 +11,7 @@ A Persona 5–inspired portfolio made by Yuanming Wang, built with **React, Type
 - **Socials:** GitHub, LinkedIn, and email cards with Open and Copy actions.
 - **Journey:** study, work, and location chapters with school and city artwork.
 - **Questions:** a conversation-style introduction to the person behind the work.
-- **Arcade:** Dino Runner and Night Flight, both with Human and AI controls and a live vision inspector.
+- **Arcade:** Dino Runner, Night Flight, and Phantom Escape with Human and AI controls and live AI overlays.
 
 The site uses red, black, and cream styling, character artwork, transparent video transitions, and responsive layouts. Text is editable through CSV files or published Google Sheets. It is a static website; no backend or Google account sign-in is required for visitors.
 
@@ -73,6 +73,10 @@ Fields containing commas or line breaks need CSV quoting; a spreadsheet's CSV ex
 A published Menu sheet can add or reorder the `arcade` row. Older sheets get the bundled Arcade entry at the end of the menu.
 
 Dino Runner loads when you open Arcade. Its logistic classifier uses two grayscale frames to estimate obstacle gap and closing speed. To regenerate the bundled weights from synthetic frame pairs, run `node scripts/train-dino.mjs`. Night Flight runs a small CNN in the browser. It locates the bird and pipe gaps from grayscale frames, and a controller plans flaps from the resulting estimates. AI Vision shows live frames, a color-coded CNN output, position estimates, and decision timing in both Human and AI mode. Add future demos to the catalog in `src/pages/ArcadePage.tsx`.
+
+Phantom Escape opens in AI mode. Select Start Run to watch Tactical A* collect coins, avoid phantoms, and find the exit. Show AI Plan displays its route, explored tiles, and predicted danger. Switch to Human at any time to move with WASD, the arrow keys, or the touch controls. Collect at least 60% of the coins and reach the unlocked exit before time runs out. Retry Maze restarts the same seed at level 1. New Maze starts a different run.
+
+The first three levels alternate open arenas and room dungeons. Hybrid dungeons join the seeded rotation at level 4, and labyrinths join at level 7.
 
 Each CSV is separate: editing the résumé does not automatically update About, Journey, Questions, or the original Google Doc. Local edits appear during development; updating the deployed site requires a new deployment.
 

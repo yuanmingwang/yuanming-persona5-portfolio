@@ -6,6 +6,7 @@ import '../styles/ArcadePage.css'
 const demos = [
   { id: 'dino', title: 'Dino Runner', description: 'Endless runner', Game: lazy(() => import('../demos/dino/DinoRunner')) },
   { id: 'night-flight', title: 'Night Flight', description: 'Flap through the pipes', Game: lazy(() => import('../demos/night-flight/NightFlight')) },
+  { id: 'phantom-escape', title: 'Phantom Escape', description: 'Steal the coins and escape the maze', Game: lazy(() => import('../demos/phantom-escape/PhantomEscape')) },
 ]
 
 type ArcadePageProps = {

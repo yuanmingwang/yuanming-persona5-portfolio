@@ -46,7 +46,32 @@ public image folders → manifest generator → filename catalog → per-visit s
 | HTML metadata/favicon | `index.html` and the referenced file in `public` |
 | Build base and plugins | `vite.config.ts` |
 | Night Flight's trainable vision model | [Night Flight AI guide](NIGHT_FLIGHT_AI.md) |
+| Phantom Escape | `src/demos/phantom-escape/{map,engine,path,tactics,render}.ts` and `PhantomEscape.tsx` |
 | Deployment | `.github/workflows/deploy.yml` |
+
+### Phantom Escape simulation
+
+`map.ts` selects and generates a connected 40×24 layout from the run seed and level.
+Early levels alternate open arenas and room dungeons. The map pool adds hybrids at
+level 4 and labyrinths at level 7. Every generator uses the same placement rules.
+The exit is a farthest walkable cell, and coins and enemies occupy separate cells.
+Enemy starts are at least 12 walking tiles from the player. Level rules cap the
+population at 40 coins and eight enemies, with a 60–90 second timer.
+
+`engine.ts` advances exactly one 60 Hz tick with an input pair whose axes each
+range from −1 to 1. Patrollers follow deterministic turns. Chasers switch to
+shortest walkable paths when they detect the player. These two kinds are available at
+level 1. The proposed additions are one telegraphed dasher from level 5 and one
+interceptor from level 9, pending separate tuning with the existing enemy cap.
+The engine owns collisions, score, and level transitions.
+
+`tactics.ts` uses the engine's positions and movement rules. It evaluates evasive
+inputs at 10 Hz and replans the route roughly five times per second. `path.ts` uses
+cardinal A* with Manhattan distance and additional traversal cost around current
+and predicted enemy tiles. After collecting the quota, the controller prioritizes
+the exit. Local evasion projects a short sequence of engine ticks. When progress
+stalls, route costs favor less-visited tiles. The arcade overlay draws the current
+route, explored tiles, and enemy risk directly from the controller.
 
 ## Loading and content lifecycle
 

@@ -129,6 +129,53 @@
   scroll-margin-block: 70px 72px;
 }
 
+.phantom-game {
+  max-width: 900px;
+}
+
+.phantom-score {
+  flex-wrap: wrap;
+}
+
+.phantom-score .phantom-urgent {
+  color: #ff8299;
+}
+
+.phantom-plan {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 5px 14px;
+}
+
+.phantom-plan label {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--arcade-paper);
+}
+
+.phantom-pad {
+  display: none;
+}
+
+@media (any-pointer: coarse) {
+  .phantom-pad {
+    display: flex;
+    justify-content: center;
+    gap: 8px;
+    padding: 0 10px 12px;
+  }
+
+  .phantom-pad button {
+    min-width: 44px;
+    min-height: 44px;
+    font-size: 20px;
+    touch-action: none;
+    user-select: none;
+  }
+}
+
 .arcade-game-header,
 .dino-vision-title,
 .arcade-game-footer {
