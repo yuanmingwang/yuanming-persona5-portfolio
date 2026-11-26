@@ -75,6 +75,51 @@ a short regrouping route that stays in effect while the controller can follow it
 Local evasion still takes over when a collision is likely. The arcade overlay draws
 the current route, explored tiles, and enemy risk directly from the controller.
 
+#### Phantom Escape training interface
+
+`scripts/phantom_escape/env.py` exposes a Gymnasium environment through a
+persistent Node subprocess per environment. The subprocess calls the same
+`createRun` and `stepRun` functions as the arcade. Python owns the Gymnasium
+episode API and converts observations to NumPy. Each action holds for six 60 Hz
+ticks (10 decisions per simulated second).
+
+| Input or output | Contract |
+| --- | --- |
+| Discrete action IDs | 0 idle, 1 north, 2 northeast, 3 east, 4 southeast, 5 south, 6 southwest, 7 west, 8 northwest |
+| `grid` observation | Float32, `7 × 24 × 40`. Walls, coins, enemy occupancy, player, exit, enemy X velocity, enemy Y velocity. Velocities are relative to player speed. |
+| `hud` observation | Float32, five values. Remaining ticks / 5,400, level / (level + 1), quota / 40, collected coins / 40, exit unlocked. |
+| Reward | +1 per coin, +2 when the exit unlocks, +10 per level clear, −10 when caught, −5 on timeout, −0.005 per full action, −0.02 on a fully blocked non-idle action. Partial actions prorate the time cost. |
+| Episode end | Collision or timer expiry terminates an episode. An optional step cap truncates it. Clearing a level continues the episode. |
+
+The baseline sends uniform random actions through the same Python transport.
+On seeds 5300–5499, it cleared zero first levels across 200 episodes, with a mean
+arcade score of 162 and mean training return of −7.38. There were 162 timeouts
+and 38 collisions.
+Replay tests compare wrapped steps with direct arcade ticks and check golden event
+and score checkpoints across the Python/Node boundary. JSON uses a local pipe and
+sends a full grid per step. Use measured rollout throughput to decide whether to
+batch observations or change transport before parallel training.
+
+The first State PPO run from scratch (500,736 transitions, arena starts) cleared
+zero first levels in the 200-seed evaluation, averaged 81.5 points, and timed
+out 184 times. The imitation option starts a fresh actor from successful
+Tactical A* demonstrations. The teacher projects each of the nine actions for
+six ticks and chooses an input using route progress and collision risk, so its
+labels use exactly the learner's action cadence. It cleared 199 of 200 first
+levels on the benchmark seeds. Demonstrations use a separate seed range and stop
+at the first clear. Keep the imitation checkpoint to distinguish gains from
+demonstrations and gains from PPO fine-tuning.
+
+Imitation on the original grid plateaued near 27% demonstration action accuracy
+and averaged 50.5 points with zero first-level clears on the 200 evaluation seeds.
+The navigation profile feeds the model 11 values for each available move and the
+same HUD. Each move includes its requested and projected displacement, predicted
+clearance and collision, possible coin pickup, and change in walking distance to
+the nearest coin, exit and active objective. Forecasts use copies of the actors
+and do not change live state, rewards, or action timing. The profile does not
+include the teacher's recommended action or route. Grid checkpoints retain their
+original input format.
+
 ## Loading and content lifecycle
 
 - All six local CSVs are imported as raw text and parsed for immediate initial state.

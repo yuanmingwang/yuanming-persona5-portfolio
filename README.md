@@ -78,6 +78,49 @@ Phantom Escape opens in AI mode. Select Start Run to watch Tactical A* collect c
 
 The first three levels alternate open arenas and room dungeons. Hybrid dungeons join the seeded rotation at level 4, and labyrinths join at level 7.
 
+For Phantom Escape training preparation, reuse the root Python environment and
+keep Node.js 24 on the path. Run these from the repository root:
+
+```sh
+.venv/bin/python -m pip install 'gymnasium>=1,<2'
+.venv/bin/python -m unittest discover -s tests -p test_phantom_training.py
+.venv/bin/python -m scripts.phantom_escape.benchmark --episodes 200
+```
+
+The benchmark measures a random policy on fixed seeds. The Gymnasium adapter and
+reward contract are described in the [architecture guide](docs/ARCHITECTURE.md#phantom-escape-training-interface).
+
+Install Stable-Baselines3 in the same environment, then run a short training check
+and a longer arena-start run:
+
+```sh
+.venv/bin/python -m pip install 'stable-baselines3>=2.9.2,<3'
+.venv/bin/python -m scripts.phantom_escape.train --steps 2048 --envs 2 --eval-episodes 0
+.venv/bin/python -m scripts.phantom_escape.train --steps 500000 --stage arena --eval-episodes 200 --output training-output/phantom-escape/arena-first
+```
+
+The trainer selects CUDA when available. Pass `--device cpu` to run on the CPU.
+Each run writes checkpoints, a CSV log and a final `state_ppo.zip` to a new directory
+under `training-output/phantom-escape/`. To continue on mixed starting maps, add
+`--resume training-output/phantom-escape/arena-first/state_ppo.zip --stage mixed`
+to a training invocation with a new output directory. Use `--evaluate PATH --eval-episodes 200`
+to compare a trusted checkpoint against the 200-seed random baseline.
+
+For the next State PPO experiment, start a fresh policy from tactical demonstrations
+using the navigation observation profile. It gives the learner projected movement,
+collision risk, and progress toward coins or the exit for each available action.
+This command trains imitation only and evaluates the saved `imitation.zip`:
+
+```sh
+.venv/bin/python -m scripts.phantom_escape.train --stage mixed --features navigation \
+  --imitation-episodes 64 --imitation-epochs 20 --steps 0 --eval-episodes 200 \
+  --output training-output/phantom-escape/navigation-first
+```
+
+If that checkpoint beats random and clears first levels, start a separate PPO
+fine-tuning run with `--resume training-output/phantom-escape/navigation-first/imitation.zip --stage mixed`.
+Keep both checkpoints and compare their held-out clear rates and mean scores.
+
 Each CSV is separate: editing the résumé does not automatically update About, Journey, Questions, or the original Google Doc. Local edits appear during development; updating the deployed site requires a new deployment.
 
 To attach a PDF to a résumé project, save it in `public/documents/project-papers/` using the project's CSV ID with hyphens replaced by underscores. Add the original ID and the PDF page count to `src/content/resumePapers.ts`. The site uses the same IDs for local and published résumé entries.
